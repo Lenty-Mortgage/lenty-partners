@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lenty Partners</title>
-<link rel="icon" href="icon.svg">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Lenty Partners v1.0</title>
+<link rel="icon" href="../icon.svg">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="theme-color" content="#002c1f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
@@ -309,7 +309,7 @@ const TYPES=['Ready apartment','Ready villa / townhouse','Off-plan','Refinance',
 const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resident'};
 
 /* ================= State ================= */
-const KEY='lenty-partners-v1.01';
+const KEY='lenty-partners-v1.0';
 const fresh=()=>({user:null,deals:[],notif:{push:true,wa:true,email:false},seen:0});
 let S=(()=>{try{return Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return fresh()}})();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
@@ -770,7 +770,7 @@ account(){
       <button class="item" onclick="resetAll()"><span class="grow" style="font-weight:600;color:var(--bad)">Reset everything</span></button>
     </div></div>
     <button class="btn btn-line" onclick="logout()">${I.logout} Log out</button>
-    <div class="stack g4" style="align-items:center;color:var(--ink);padding:8px 0"><span>${LOGO(26)}</span><span class="small muted">Partners · v1.01</span></div>
+    <div class="stack g4" style="align-items:center;color:var(--ink);padding:8px 0"><span>${LOGO(26)}</span><span class="small muted">Partners · v1.0</span></div>
   </div><div style="height:40px"></div></div></div>`;
 },
 };
