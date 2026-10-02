@@ -312,7 +312,7 @@ const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resi
 const KEY='lenty-partners-v1.01';
 const fresh=()=>({user:null,deals:[],notif:{push:true,wa:true,email:false},seen:0});
 let S=(()=>{try{return Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return fresh()}})();
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const tmp={};
 let R={screen:S.user?'today':'welcome',tab:'today',params:{}};
 
@@ -914,7 +914,32 @@ function contactSheet(){
   <div class="card pad row"><span class="grow num" style="font-weight:600">partners@lenty.com</span><button class="link" onclick="copy('partners@lenty.com','Email copied')">Copy</button></div></div>`);
 }
 
-render();
+/* ================= Screen preview mode (?screen=…) for the screens overview ================= */
+const QP=new URLSearchParams(location.search);
+(function boot(){
+  const sc=QP.get('screen');
+  if(!sc||!SCREENS[sc]){render();return}
+  save=()=>{};
+  S=fresh();
+  S.user={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235',cc:'+971',phone:'50 123 4567',since:Date.now()-90*DAY,iban:''};
+  S.deals=sampleDeals();S.seen=Date.now()-2*DAY;
+  tmp.phone='50 123 4567';tmp.auth={cc:'+971',phone:'50 123 4567'};
+  tmp.prof={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235'};tmp.agree=QP.get('agree')==='1';
+  const byName=n=>(S.deals.find(d=>d.first.toLowerCase()===String(n||'').toLowerCase())||S.deals[1]).id;
+  const p={};
+  if(sc==='deal')p.id=byName(QP.get('deal'));
+  if(sc==='done')p.id=byName('yusuf');
+  if(sc==='refer'){
+    startRefer({first:'Maria',last:'Santos',phone:'52 334 1189',price:2400000,down:20,area:'Dubai Marina',lang:'English',advisor:'a4'});
+    tmp.refStep=+(QP.get('step')||1);
+  }
+  R.screen=sc;R.params=p;if(TABS.includes(sc))R.tab=sc;
+  render();
+  const sh=QP.get('sheet');
+  const sheets={updates:updatesSheet,agreement:agreementSheet,advisor:advisorSheet,contacts:contactsSheet,iban:ibanSheet,country:()=>pickCountry('auth')};
+  if(sheets[sh]){const a=document.querySelector('.view')&&null;sheets[sh]();document.querySelectorAll('.sheet,.backdrop').forEach(e=>e.style.animation='none')}
+  document.querySelectorAll('.view').forEach(e=>e.style.animation='none');
+})();
 </script>
 </body>
 </html>
