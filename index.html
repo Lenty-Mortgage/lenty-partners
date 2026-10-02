@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lenty Partners</title>
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#002c1f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+/* Layout: phone app — content column over a cool off-white ground, floating navy dock; money set in Prata as the signature */
+:root{
+  color-scheme:light;
+  --ground:#f4f2ea; --card:#fffdf8; --ink:#002c1f; --ink-2:#1e4034; --muted:#6a7069; --line:#e3dfd2; --line-2:#efece3;
+  --accent:#2e6a50; --accent-ink:#1e4d3a; --accent-soft:#e4ede6;
+  --cream:#eee2c9; --sand:#b79d84;
+  --good:#1d7a4a; --good-soft:#e1f2e6; --warn:#9c5a00; --warn-soft:#fbf0d6; --bad:#b8382d; --bad-soft:#fbe9e6;
+  --aurora:repeating-linear-gradient(100deg,#1e4034 10%,#3f7a5e 15%,#b79d84 20%,#efe2c8 25%,#2e6a50 30%);
+  --display:"Prata",Georgia,"Times New Roman",serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:#e5e2d8;font-family:var(--body);color:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100%}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+input,select,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.serif{font-family:var(--display);font-weight:400}
+.num{font-variant-numeric:tabular-nums}
+
+/* Device frame */
+.device{width:390px;height:844px;border-radius:54px;background:#0b120f;padding:12px;box-shadow:0 30px 80px rgba(1,44,31,.28),0 0 0 2px #22302a inset;position:relative;flex:none}
+.screen{position:relative;width:100%;height:100%;border-radius:42px;overflow:hidden;background:var(--ground);isolation:isolate}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;background:#000;border-radius:20px;z-index:60}
+.statusbar{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 34px;font-weight:600;font-size:16px;z-index:55;pointer-events:none;color:var(--ink);transition:color .2s}
+.statusbar.light{color:#fff}
+.statusbar .icons{display:flex;gap:6px;align-items:center}
+.homeind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--ink);z-index:90;opacity:.85;pointer-events:none}
+.homeind.light{background:#fff}
+@media (max-width:500px){
+  body{background:var(--ground);display:block}
+  .device{width:100%;height:100%;border-radius:0;padding:0;box-shadow:none}
+  .screen{border-radius:0}
+  .island,.statusbar,.homeind{display:none}
+}
+
+/* Views */
+.view{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--ground);animation:rise .24s ease}
+@keyframes rise{from{transform:translateY(8px)}to{transform:none}}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.top{height:56px;flex:none}
+@media (max-width:500px){.top{height:calc(12px + env(safe-area-inset-top,0px))}}
+.px{padding-left:20px;padding-right:20px}
+.stack{display:flex;flex-direction:column}
+.g4{gap:4px}.g8{gap:8px}.g10{gap:10px}.g12{gap:12px}.g16{gap:16px}.g20{gap:20px}.g24{gap:24px}
+.row{display:flex;align-items:center;gap:12px}
+.between{justify-content:space-between}
+.grow{flex:1;min-width:0}
+.h1{font-family:var(--display);font-size:30px;line-height:1.15;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0}
+.label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px;line-height:1.45}
+.body{font-size:15px;line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.pad{padding:18px}
+.divider{height:1px;background:var(--line-2)}
+.iconbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);flex:none;position:relative}
+.iconbtn .dot{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--card)}
+.back{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;margin-left:-10px;flex:none}
+.back:active{background:var(--line-2)}
+
+/* Buttons */
+.btn{height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:16px;width:100%;transition:transform .08s}
+.btn:active{transform:scale(.98)}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-soft{background:var(--accent-soft);color:var(--accent-ink)}
+.btn-line{background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.btn-white{background:var(--cream);color:var(--ink)}
+.btn[disabled]{background:var(--line-2);color:#a8a392;pointer-events:none;border-color:transparent}
+.btn-sm{height:44px;font-size:14px;border-radius:13px}
+.link{color:var(--accent-ink);font-weight:600;font-size:14px}
+
+/* Fields */
+.f-label{font-size:14px;font-weight:600;margin:0 0 8px;display:flex;justify-content:space-between;gap:8px}
+.f-label .opt{font-weight:400;color:var(--muted)}
+.field{height:54px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:10px;transition:border-color .15s}
+.field:focus-within{border-color:var(--accent)}
+.field input,.field select{flex:1;border:0;outline:0;background:transparent;font-size:16px;min-width:0;height:100%}
+.field select{appearance:none;cursor:pointer}
+.field .suf{color:var(--muted);font-size:14px;flex:none}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+textarea.area{width:100%;min-height:90px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);padding:14px;font-size:16px;outline:0;resize:none}
+textarea.area:focus{border-color:var(--accent)}
+.cc{display:flex;align-items:center;gap:6px;font-weight:600;padding-right:10px;border-right:1px solid var(--line);height:28px;flex:none}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--line-2);border-radius:14px;padding:4px;gap:4px}
+.seg button{height:40px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(1,44,31,.12)}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45;text-align:left}
+.check .box{width:24px;height:24px;border-radius:8px;border:1.5px solid #c9c4b4;display:grid;place-items:center;flex:none;background:var(--card);color:#fff;transition:all .15s}
+.check.on .box{background:var(--accent);border-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--accent-soft);color:var(--accent-ink)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.grey{background:var(--line-2);color:var(--muted)}
+.avatar{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--accent-soft);color:var(--accent-ink);flex:none}
+.avatar.round{border-radius:50%}
+.avatar.ink{background:var(--ink);color:#fff}
+
+/* Journey bar — signature element */
+.jbar{display:flex;align-items:center;gap:3px}
+.jbar i{height:6px;flex:1;border-radius:3px;background:var(--line)}
+.jbar i.done{background:var(--ink)}
+.jbar i.cur{background:var(--accent);position:relative;overflow:hidden}
+.jbar i.cur::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:sweep 1.8s infinite}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.jbar .gap{width:5px;flex:none}
+.jbar .key{flex:none;margin-left:4px;color:var(--line);display:grid}
+.jbar .key.done{color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.jbar i.cur::after,.aurora{animation:none!important}.view{animation:none}}
+
+/* Dock */
+.dock{position:absolute;left:14px;right:14px;bottom:22px;height:66px;border-radius:24px;background:var(--ink);display:flex;align-items:center;padding:0 8px;gap:2px;z-index:40;box-shadow:0 14px 34px rgba(1,44,31,.35)}
+.dock .t{flex:1;height:52px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:rgba(255,255,255,.55);font-size:10.5px;font-weight:600}
+.dock .t.on{color:#fff;background:rgba(255,255,255,.1)}
+.dock .refer{height:50px;padding:0 16px;border-radius:16px;background:var(--cream);color:var(--ink);font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;flex:none;margin-left:4px}
+@media (max-width:500px){.dock{bottom:calc(12px + env(safe-area-inset-bottom,0px))}}
+.dock-space{height:110px}
+
+/* Aurora */
+.aurora{position:absolute;inset:-30%;background-image:var(--aurora);background-size:300% 200%;filter:blur(40px);opacity:.55;animation:aur 24s linear infinite}
+@keyframes aur{from{background-position:0% 50%}to{background-position:300% 50%}}
+
+/* Earnings hero */
+.hero{border-radius:26px;background:var(--ink);color:#fff;padding:20px;position:relative;overflow:hidden;text-align:left;width:100%}
+.hero .aurora{opacity:.4;inset:-60% -20% auto auto;width:120%;height:180%;mask-image:radial-gradient(circle at 80% 20%,#000,transparent 60%);-webkit-mask-image:radial-gradient(circle at 80% 20%,#000,transparent 60%)}
+.hero .big{color:var(--cream);font-family:var(--display);font-size:40px;line-height:1.05;letter-spacing:-.01em;position:relative}
+.hero .lbl{font-size:13px;color:rgba(255,255,255,.7);position:relative}
+.hero .split{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;margin-top:16px}
+.hero .split div{background:rgba(255,255,255,.08);border-radius:14px;padding:10px 12px}
+.hero .split b{display:block;font-size:16px;margin-top:2px}
+
+/* Lists */
+.item{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;text-align:left}
+.item + .item{border-top:1px solid var(--line-2)}
+.item:active{background:var(--line-2)}
+.chev{color:#b5b09f;flex:none}
+.deal{display:flex;flex-direction:column;gap:12px;padding:16px;width:100%;text-align:left}
+.deal + .deal{border-top:1px solid var(--line-2)}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:0 20px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;height:38px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:600;background:var(--card);border:1px solid var(--line);color:var(--muted);display:flex;align-items:center;gap:6px}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tabs .n{font-size:12px;opacity:.75}
+
+/* Timeline */
+.phase-h{display:flex;align-items:center;gap:10px;margin:4px 0 12px}
+.phase-h .label{color:var(--ink)}
+.tl{display:flex;gap:14px;position:relative;padding-bottom:18px}
+.tl:last-child{padding-bottom:4px}
+.tl .d{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none;z-index:1;color:#fff}
+.tl:not(:last-child)::before{content:"";position:absolute;left:11px;top:24px;bottom:0;width:2px;background:var(--line)}
+.tl.done .d{background:var(--ink);border-color:var(--ink)}
+.tl.done:not(:last-child)::before{background:var(--ink)}
+.tl.cur .d{border-color:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
+.tl.cur .d::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.tl .t1{font-weight:600;font-size:15px}
+.tl .t2{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.4}
+
+/* Sheet */
+.backdrop{position:absolute;inset:0;background:rgba(1,44,31,.45);z-index:80;animation:bd .2s ease}
+@keyframes bd{from{opacity:0}}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--ground);border-radius:28px 28px 0 0;z-index:81;max-height:90%;display:flex;flex-direction:column;animation:up .28s cubic-bezier(.2,.8,.2,1)}
+.sheet.tall{height:90%}
+@keyframes up{from{transform:translateY(100%)}}
+.grab{width:40px;height:5px;border-radius:3px;background:#d3cebf;margin:10px auto 4px;flex:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px;flex:none}
+.sheet-foot{padding:12px 20px 30px;flex:none}
+
+/* Stepper */
+.steps{display:flex;gap:6px}
+.steps i{height:4px;flex:1;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--ink)}
+
+/* OTP */
+.otp{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.otp input{height:60px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);text-align:center;font-size:24px;font-weight:600;outline:0;width:100%;font-variant-numeric:tabular-nums}
+.otp input:focus{border-color:var(--accent)}
+
+.toast{position:absolute;left:20px;right:20px;bottom:104px;background:var(--ink);color:#fff;padding:14px 16px;border-radius:16px;font-size:14px;font-weight:500;z-index:95;animation:rise .2s;display:flex;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(1,44,31,.3)}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:11px 0;font-size:14.5px}
+.kv + .kv{border-top:1px solid var(--line-2)}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{font-weight:600;text-align:right}
+.verdict{border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:6px}
+.verdict.good{background:var(--good-soft)}
+.verdict.warn{background:var(--warn-soft)}
+.verdict.bad{background:var(--bad-soft)}
+.verdict .v{font-family:var(--display);font-size:26px;line-height:1.15}
+.verdict.good .v{color:var(--good)}.verdict.warn .v{color:var(--warn)}.verdict.bad .v{color:var(--bad)}
+.toggle{width:50px;height:30px;border-radius:999px;background:#d0cbbb;position:relative;transition:background .2s;flex:none}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.toggle.on{background:var(--accent)}
+.toggle.on::after{transform:translateX(20px)}
+.qr{background:#fff;border-radius:20px;padding:18px;display:grid;place-items:center;border:1px solid var(--line)}
+.qr svg{width:180px;height:180px}
+.ratecard{border-radius:24px;background:var(--ink);color:#fff;padding:20px;position:relative;overflow:hidden}
+.rate-row{display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid rgba(255,255,255,.12);position:relative;font-size:15px}
+.tool{display:flex;gap:14px;align-items:flex-start;padding:16px;text-align:left;width:100%}
+.tool + .tool{border-top:1px solid var(--line-2)}
+.tool .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-ink);flex:none}
+.sample{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);color:var(--accent-ink);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.45}
+details.demo summary{list-style:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);padding:6px 0;display:flex;align-items:center;gap:6px}
+details.demo summary::-webkit-details-marker{display:none}
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="screen" id="screen">
+    <div class="island"></div>
+    <div class="statusbar" id="statusbar"><span id="clock" class="num">9:41</span><span class="icons">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 2.5c2.3 0 4.4.9 6 2.4l1.2-1.3A10.4 10.4 0 0 0 8 .7 10.4 10.4 0 0 0 .8 3.6L2 4.9a8.6 8.6 0 0 1 6-2.4Zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3A6.7 6.7 0 0 0 8 4.3a6.7 6.7 0 0 0-4.6 1.8l1.2 1.3A5 5 0 0 1 8 6.1Zm0 3.5-2 2.1 2 .3 2-.3-2-2.1Z"/></svg>
+      <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" opacity=".4" fill="none"/><rect x="2" y="2" width="18" height="9" rx="2" fill="currentColor"/><path d="M25 4.5v4a2 2 0 0 0 0-4Z" fill="currentColor" opacity=".4"/></svg>
+    </span></div>
+    <div id="app"></div>
+    <div id="overlay"></div>
+    <div class="homeind" id="homeind"></div>
+  </div>
+</div>
+
+<script>
+/* ================= Icons ================= */
+const LOGO=(h=28)=>`<svg height="${h}" viewBox="140 340 720 290" fill="currentColor" role="img" aria-label="Lenty" style="display:block"><path d="M683 436.5V528C683.5 540.5 682 545 688.5 553C693.013 556.908 695 558 701 559C706 559.833 714.119 560.32 721.069 554.76L723.5 559C715 569 701.332 577.5 687 577.5C671.988 577.5 659.5 571 655 561C651.664 554.05 651.291 546.698 651.291 521.956V436.5H630.5V428C644 425.5 649 422.5 660 412C665.004 404.216 667.5 403.5 671.5 389.5L683 388C682.444 399.398 683 400.202 683 425.5H716V436.5H683Z M509 417.5V446C525 428 539 420 561.5 418.5C579.57 418.5 593.772 424.712 601 437.5C606.004 445.84 609 456.82 609 473.5V533.814C609 558.556 610.5 567 624 568V574.5H562V567C576 566 577.5 558.278 577.5 533.814V473.5C576.5 444 559.5 439.5 548 438.5C538.038 437.634 530 440.848 524 444.5C519 447.543 516.5 449 510 456L509 533.814C509 558.834 513 566.5 525.501 567V573.5H462.501L462.5 567C475.5 566 478 558.556 478 533.814V457C477.5 436.5 470 437.5 461.5 436.5V430L509 417.5Z M448 485.5L345.5 485C345.5 503 344.883 519.726 358 535C368.959 547.761 379.5 553.5 396.5 554.5C415.682 554.5 429.5 548.5 444.5 533L447.669 535.524C433.769 561.934 414.134 577 385.5 577C340.5 579.5 313.951 543.864 313.951 497.438C313.951 450.734 341.744 418.5 384 418.5C412.356 418.5 434.326 431.592 443.5 455.5C446.558 463.84 447.444 467.986 448 485.5ZM346.5 474L416.5 474.5C416.5 460.5 414.364 454.5 412 448C408 437 393.842 429 383 429C371.046 429 358.303 436.343 352 450C349 456.5 347.5 461 346.5 474Z M151 574.5L151.001 567C167.001 565.5 167.001 556.798 167.001 531.5L165.869 393.636C165.5 368.5 162 367 151 364.724L151.001 360H218.001V364.724C205.5 367.5 202.5 369.5 202.009 393.636L201.001 561.5H227.501C251 562 272.5 560.5 281.5 545.5C287.132 536.114 287.501 536.5 293.501 520H300.501L295.501 574.5H151Z M795 430C787.5 430.5 781 434.994 781 442.5C781 446.67 783.664 455.104 787 464L817.5 542.5L843.5 475.5C847.114 466.326 853.5 450.782 853.5 445.5C853.5 434.102 852.5 431.5 841 430V424.5H884V430C870.5 432 867.51 445.586 855 477L804 605.854C792.602 634.488 771.5 648 757.5 647.5C748.401 647.825 740.358 644.558 735.705 639.212L742.093 621.523C747.854 621.644 753.277 622.193 755.5 622C767 621 772 618 775 616.5C784 612 791.868 602.24 797.15 589.452L801.32 578.332L752.67 462.128C743.218 439.888 739.5 431.5 727 430V424.5H795V430Z"/></svg>`;
+const sv=(p,w=22,extra='')=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${p}</svg>`;
+const I={
+  today:sv('<path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>'),
+  deals:sv('<path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2"/>'),
+  wallet:sv('<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.2" fill="currentColor"/><path d="M7 6V4.5h10V6"/>'),
+  tools:sv('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="M16.5 13.5v6M13.5 16.5h6"/>'),
+  plus:sv('<path d="M12 5v14M5 12h14"/>',18,'stroke-width="2.4"'),
+  back:sv('<path d="M15 5l-7 7 7 7"/>',24,'stroke-width="2"'),
+  chev:sv('<path d="M9 6l6 6-6 6"/>',18,'class="chev" stroke-width="2"'),
+  down:sv('<path d="M6 9l6 6 6-6"/>',18),
+  close:sv('<path d="M6 6l12 12M18 6 6 18"/>',22,'stroke-width="2"'),
+  bell:sv('<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9Z"/><path d="M10 20a2 2 0 0 0 4 0"/>',20),
+  key:sv('<circle cx="8" cy="15" r="4"/><path d="M11 12 20 3M16.5 6.5l2.5 2.5M14.5 8.5l2 2"/>',16,'stroke-width="2.2"'),
+  keyLg:sv('<circle cx="8" cy="15" r="4"/><path d="M11 12 20 3M16.5 6.5l2.5 2.5M14.5 8.5l2 2"/>',22),
+  check:sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>',14,'stroke-width="3"'),
+  checkLg:sv('<path d="M5 12.5l4.5 4.5L19 7.5"/>',40,'stroke-width="2.4"'),
+  gauge:sv('<path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/><circle cx="12" cy="16" r="1.4" fill="currentColor"/>'),
+  calc:sv('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7h7M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01M8.5 15h.01M12 15h.01M15.5 15h.01M8.5 18h.01M12 18h.01M15.5 18h.01"/>'),
+  qr:sv('<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>'),
+  rates:sv('<path d="M4 19 10 13l4 4 6-8"/><path d="M15 9h5v5"/>'),
+  doc:sv('<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>'),
+  scale:sv('<path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-2.5 6a3 3 0 0 0 5 0Zm14 0-2.5 6a3 3 0 0 0 5 0Z"/>'),
+  wa:`<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.4 14.1c-.2.6-1.3 1.2-1.8 1.3-.5 0-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.9 2c0 .2.1.4 0 .6l-.3.5-.4.5c-.2.1-.3.3-.1.6.2.3.8 1.3 1.6 2.1 1.1 1 2.1 1.3 2.4 1.4.3.2.5.1.6 0l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.2Z"/></svg>`,
+  copy:sv('<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',18),
+  user:sv('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'),
+  shield:sv('<path d="M12 3 5 6v5c0 4.6 3 8.4 7 10 4-1.6 7-5.4 7-10V6z"/><path d="M9 12l2 2 4-4"/>',20),
+  info:sv('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',18),
+  alert:sv('<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>',18),
+  spark:sv('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',18),
+  clock:sv('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',18),
+  phone:sv('<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2Z"/>',18),
+  logout:sv('<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',20),
+};
+
+/* ================= Reference data ================= */
+const RATE=0.003, PAYOUT_DAYS=45, DAY=864e5;
+const COUNTRIES=[
+  {f:'🇦🇪',c:'+971',n:'United Arab Emirates'},{f:'🇬🇧',c:'+44',n:'United Kingdom'},{f:'🇮🇳',c:'+91',n:'India'},
+  {f:'🇸🇦',c:'+966',n:'Saudi Arabia'},{f:'🇺🇦',c:'+380',n:'Ukraine'},{f:'🇷🇺',c:'+7',n:'Russia'},
+  {f:'🇵🇰',c:'+92',n:'Pakistan'},{f:'🇩🇪',c:'+49',n:'Germany'},{f:'🇺🇸',c:'+1',n:'United States'}
+];
+const ADVISORS=[
+  {id:'a1',n:'Elena Petrenko',l:['English','Ukrainian','Russian']},
+  {id:'a2',n:'Amira Haddad',l:['Arabic','English','French']},
+  {id:'a3',n:'Farhan Qureshi',l:['English','Hindi','Urdu']},
+  {id:'a4',n:'Daniel Okafor',l:['English']},
+  {id:'a5',n:'Sofia Lindqvist',l:['English','German','Swedish']},
+  {id:'a6',n:'Omar Saleh',l:['Arabic','English']},
+];
+const LEGAL=[{id:'l1',n:'Mariam Al Suwaidi'},{id:'l2',n:'James Whitford'}];
+const LANGS=['English','Arabic','Russian','Ukrainian','Hindi','Urdu','French','German'];
+const STAGES=[
+  {t:'Discovery call',p:0,eta:'Day 0',d:'15-minute call with your client about goals, residency and income.'},
+  {t:'Bank matching',p:0,eta:'24–48 hrs',d:'Rates pulled from 19 UAE banks; the best 3 are shortlisted.'},
+  {t:'Pre-approval',p:0,eta:'3–5 days',d:'File submitted to the bank most likely to approve at the best rate.'},
+  {t:'Valuation',p:0,eta:'2–4 days',d:'A bank-appointed valuer inspects the property.'},
+  {t:'Final offer letter',p:0,eta:'3–5 days',d:'The bank issues the final offer and your client signs it.'},
+  {t:'Contract & NOC',p:1,eta:'3–7 days',d:'Lenty legal reviews the contract and obtains the developer NOC.'},
+  {t:'Transfer & disbursal',p:1,eta:'1 day',d:'Transfer at the trustee office; the bank releases the loan.'},
+  {t:'Keys',p:2,eta:'Same day',d:'Your client gets the keys.'},
+];
+const PHASES=[['Mortgage','Lenty mortgage advisors'],['Legal','Lenty legal team · free for your client'],['Handover','']];
+const DOCS=['Passport','UAE visa','Emirates ID','Salary certificate','6-month bank statements','Property MOU / Form F'];
+const TYPES=['Ready apartment','Ready villa / townhouse','Off-plan','Refinance','Buyout','Commercial'];
+const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resident'};
+
+/* ================= State ================= */
+const KEY='lenty-partners-v2';
+const fresh=()=>({user:null,deals:[],notif:{push:true,wa:true,email:false},seen:0});
+let S=(()=>{try{return Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return fresh()}})();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const tmp={};
+let R={screen:S.user?'today':'welcome',tab:'today',params:{}};
+
+function sampleDeals(){
+  const now=Date.now();
+  const mk=(o)=>Object.assign({id:'d'+Math.random().toString(36).slice(2,8),cc:'+971',email:'',notes:'',docs:6,status:'active',sample:true,legal:'l1',updates:[]},o);
+  return [
+    mk({first:'Yusuf',last:'Karim',phone:'55 761 2093',type:'Ready apartment',area:'Downtown Dubai',price:2000000,loan:1600000,residency:'resident',stage:0,advisor:'a6',docs:1,createdAt:now-2*36e5,
+        updates:[{at:now-2*36e5,t:'Referral received. Omar will call Yusuf within 1 hour.'}]}),
+    mk({first:'Olena',last:'Kovalenko',cc:'+380',phone:'67 509 7777',type:'Ready apartment',area:'Jumeirah Village Circle',price:1450000,loan:1160000,residency:'resident',stage:2,advisor:'a1',docs:4,createdAt:now-4*DAY,
+        updates:[{at:now-4*DAY,t:'Referral received.'},{at:now-3.8*DAY,t:'Discovery call done. Salaried, 6 years in UAE.'},{at:now-2*DAY,t:'3 banks shortlisted. Best fixed rate 3.79%.'},{at:now-1*DAY,t:'Pre-approval file sent to the bank. Waiting for 2 documents.'}]}),
+    mk({first:'Ahmed',last:'Al Nuaimi',phone:'50 214 8890',type:'Ready villa / townhouse',area:'Arabian Ranches',price:4200000,loan:3360000,residency:'national',stage:5,advisor:'a2',legal:'l1',createdAt:now-19*DAY,
+        updates:[{at:now-19*DAY,t:'Referral received.'},{at:now-12*DAY,t:'Pre-approved at 3.69% fixed for 3 years.'},{at:now-6*DAY,t:'Valuation came in at AED 4.25M.'},{at:now-3*DAY,t:'Final offer letter signed.'},{at:now-1*DAY,t:'Mariam requested the NOC from the developer. Usually 3–5 working days.'}]}),
+    mk({first:'Chloe',last:'Bennett',cc:'+44',phone:'7700 900 431',type:'Ready villa / townhouse',area:'Dubai Hills Estate',price:2900000,loan:2320000,residency:'resident',stage:7,status:'payout',advisor:'a5',legal:'l2',createdAt:now-41*DAY,disbursedAt:now-12*DAY,
+        updates:[{at:now-41*DAY,t:'Referral received.'},{at:now-12*DAY,t:'Transfer completed at the trustee office. Loan disbursed.'},{at:now-12*DAY,t:'Keys handed over. Your payout is scheduled.'}]}),
+    mk({first:'Rohit',last:'Mehta',cc:'+91',phone:'98201 44320',type:'Off-plan',area:'Business Bay',price:1800000,loan:1440000,residency:'resident',stage:7,status:'paid',advisor:'a3',legal:'l2',createdAt:now-110*DAY,disbursedAt:now-75*DAY,paidAt:now-30*DAY,
+        updates:[{at:now-75*DAY,t:'Loan disbursed. Keys handed over.'},{at:now-30*DAY,t:'Commission of AED 4,320 paid to your account.'}]}),
+  ];
+}
+
+/* ================= Helpers ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>+String(v??'').replace(/[^\d.]/g,'')||0;
+const fmt=n=>Math.round(+n||0).toLocaleString('en-US');
+const aed=n=>'AED '+fmt(n);
+const short=n=>n>=1e6?'AED '+(n/1e6).toFixed(n%1e6?2:0).replace(/\.?0+$/,'')+'M':aed(n);
+const date=t=>new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const ago=t=>{const s=(Date.now()-t)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';const d=Math.floor(s/86400);return d===1?'yesterday':d+'d ago'};
+const ini=(a,b)=>((a||'')[0]||'').toUpperCase()+((b||'')[0]||'').toUpperCase();
+const adv=id=>ADVISORS.find(a=>a.id===id)||ADVISORS[0];
+const legal=id=>LEGAL.find(a=>a.id===id)||LEGAL[0];
+const comm=d=>d.loan*RATE;
+const payoutAt=d=>d.disbursedAt+PAYOUT_DAYS*DAY;
+const daysLeft=d=>Math.max(0,Math.ceil((payoutAt(d)-Date.now())/DAY));
+const name=d=>esc(d.first+(d.last?' '+d.last:''));
+const greet=()=>{const h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening'};
+const slug=()=>S.user?(S.user.first+'-'+(S.user.last||'')[0]).toLowerCase().replace(/[^a-z0-9-]/g,''):'agent';
+const refLink=()=>'lenty.com/r/'+slug();
+function toast(msg){const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="color:var(--cream);display:grid">${I.check}</span><span>${esc(msg)}</span>`;$('#screen').appendChild(t);setTimeout(()=>t.remove(),2400)}
+async function copy(text,msg){try{await navigator.clipboard.writeText(text);toast(msg||'Copied')}catch(e){toast('Copy not available here — select the text to copy')}}
+function tick(){const d=new Date();$('#clock').textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')}tick();setInterval(tick,15000);
+
+function jbar(d){
+  const all=d.status==='payout'||d.status==='paid';
+  let h='';STAGES.forEach((s,i)=>{if(i===5||i===7)h+='<span class="gap"></span>';
+    if(i===7)return; const c=all||i<d.stage?'done':(i===d.stage&&d.status==='active'?'cur':'');h+=`<i class="${c}"></i>`});
+  const keyDone=all||d.stage>=7;
+  return `<div class="jbar" aria-label="Stage ${Math.min(d.stage+1,8)} of 8">${h}<span class="key ${keyDone?'done':''}">${I.key}</span></div>`;
+}
+function statusPill(d){
+  if(d.status==='payout')return `<span class="pill warn">${I.clock} Payout in ${daysLeft(d)} days</span>`;
+  if(d.status==='paid')return `<span class="pill good">${I.check} Paid ${date(d.paidAt)}</span>`;
+  if(d.status==='lost')return `<span class="pill bad">Not proceeding</span>`;
+  if(d.status==='paused')return `<span class="pill grey">On hold</span>`;
+  const s=STAGES[d.stage];return `<span class="pill">${d.stage+1}/8 · ${s.t}</span>`;
+}
+function attention(){
+  const out=[];
+  S.deals.forEach(d=>{
+    if(d.status==='active'&&d.stage<=3&&d.docs<6)out.push({d,k:'warn',t:`${esc(d.first)} still needs ${6-d.docs} document${6-d.docs>1?'s':''}`,s:'Send the upload link so the file is not delayed.'});
+    if(d.status==='active'&&d.stage===5)out.push({d,k:'info',t:`Waiting for the developer NOC for ${esc(d.first)}`,s:'Lenty legal is chasing it. Usually 3–5 working days.'});
+    if(d.status==='active'&&(d.stage===3||d.stage===4))out.push({d,k:'good',t:`${esc(d.first)} is pre-approved`,s:`Show properties up to ${short(d.price)}.`});
+    if(d.status==='payout')out.push({d,k:'good',t:`${aed(comm(d))} payout on ${date(payoutAt(d))}`,s:`${esc(d.first)}'s loan was disbursed ${ago(d.disbursedAt)}.`});
+  });
+  return out;
+}
+
+/* ================= Router ================= */
+const TABS=['today','deals','wallet','tools'];
+function go(s,p={}){R.screen=s;R.params=p;if(TABS.includes(s))R.tab=s;render();const sc=$('#app .scroll');if(sc&&!p.keepScroll)sc.scrollTop=0}
+function render(){
+  clearInterval(tmp.timer);
+  $('#app').innerHTML=SCREENS[R.screen]();
+  const dark=['welcome','done'].includes(R.screen);
+  $('#statusbar').classList.toggle('light',dark);$('#homeind').classList.toggle('light',dark);
+  AFTER[R.screen]&&AFTER[R.screen]();
+}
+function dock(){
+  const t=(k,l)=>`<button class="t ${R.tab===k?'on':''}" onclick="go('${k}')" aria-label="${l}">${I[k]}<span>${l}</span></button>`;
+  return `<nav class="dock">${t('today','Today')}${t('deals','Deals')}${t('wallet','Wallet')}${t('tools','Tools')}<button class="refer" onclick="startRefer()">${I.plus}Refer</button></nav>`;
+}
+function sheet(html,cls=''){$('#overlay').innerHTML=`<div class="backdrop" onclick="closeSheet()"></div><div class="sheet ${cls}" role="dialog"><div class="grab"></div>${html}</div>`}
+function closeSheet(){const o=$('#overlay'),s=o.querySelector('.sheet');if(!s)return;s.style.transition='transform .2s';s.style.transform='translateY(100%)';o.querySelector('.backdrop').style.opacity=0;setTimeout(()=>o.innerHTML='',200)}
+function sheetHead(t){return `<div class="sheet-h"><div class="h2">${t}</div><button class="iconbtn" style="width:36px;height:36px" onclick="closeSheet()" aria-label="Close">${I.close}</button></div>`}
+
+/* ================= Screens ================= */
+const SCREENS={
+welcome(){
+  return `<div class="view" style="background:var(--ink);color:var(--cream);overflow:hidden">
+  <div class="aurora" style="inset:-40% -40% 40% -40%;opacity:.5"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,var(--ink) 62%)"></div>
+  <div class="top"></div>
+  <div class="px" style="position:relative;display:flex;align-items:baseline;gap:8px;margin-top:10px"><span style="color:var(--cream)">${LOGO(34)}</span><span class="label" style="color:rgba(238,226,201,.7);letter-spacing:.2em">Partners</span></div>
+  <div style="flex:1"></div>
+  <div class="px stack g24" style="position:relative;padding-bottom:36px">
+    <h1 class="serif" style="font-size:40px;line-height:1.08;margin:0;text-wrap:balance">Close the deal,<br>not just the mortgage.</h1>
+    <div class="stack g12">
+      ${[['0.3%','of every loan you refer, paid to you'],['45 days','after disbursal, with a date you can see'],['AED 0','for your client: mortgage advice and legal handled by Lenty']].map(([a,b])=>`<div class="row" style="align-items:baseline;gap:14px"><span class="serif num" style="font-size:22px;min-width:86px">${a}</span><span style="font-size:15px;color:rgba(255,255,255,.78);line-height:1.4">${b}</span></div>`).join('')}
+    </div>
+    <div class="stack g10">
+      <button class="btn btn-white" onclick="tmp.mode='signup';go('phone')">Become a partner</button>
+      <button class="btn" style="color:var(--cream)" onclick="tmp.mode='login';go('phone')">I already have an account</button>
+    </div>
+  </div></div>`;
+},
+phone(){
+  const c=tmp.cc||COUNTRIES[0];
+  return `<div class="view"><div class="top"></div><div class="px stack g16" style="flex:1">
+    <button class="back" onclick="go('welcome')" aria-label="Back">${I.back}</button>
+    <div class="stack g8"><h1 class="h1">Your mobile number</h1><p class="body muted" style="margin:0">We'll text you a 6-digit code. Use the number your clients know you by.</p></div>
+    <div><div class="f-label">Mobile number</div>
+      <div class="field"><button class="cc" onclick="pickCountry('auth')"><span style="font-size:20px">${c.f}</span>${c.c}</button><input id="ph" inputmode="tel" autocomplete="tel" placeholder="50 123 4567" value="${esc(tmp.phone||'')}"></div></div>
+    <div style="flex:1"></div>
+    <button class="btn btn-ink" id="cont" disabled onclick="go('otp')" style="margin-bottom:34px">Send code</button>
+  </div></div>`;
+},
+otp(){
+  return `<div class="view"><div class="top"></div><div class="px stack g16" style="flex:1">
+    <button class="back" onclick="go('phone')" aria-label="Back">${I.back}</button>
+    <div class="stack g8"><h1 class="h1">Enter the code</h1><p class="body muted" style="margin:0">Sent by SMS to ${esc((tmp.cc||COUNTRIES[0]).c+' '+tmp.phone)}</p></div>
+    <div class="otp" id="otp">${[0,1,2,3,4,5].map(i=>`<input id="o${i}" inputmode="numeric" maxlength="1" aria-label="Digit ${i+1}" autocomplete="${i?'off':'one-time-code'}">`).join('')}</div>
+    <p class="small muted" id="resend" style="margin:0"></p>
+    <p class="small" style="margin:0;color:#a7a291">Prototype: any 6 digits work.</p>
+    <div style="flex:1"></div>
+    <button class="btn btn-ink" id="confirm" disabled onclick="verify()" style="margin-bottom:34px">Verify</button>
+  </div></div>`;
+},
+profile(){
+  const p=tmp.prof||(tmp.prof={first:'',last:'',agency:'',brn:''});
+  return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g16">
+    <div class="row between"><button class="back" onclick="go('otp')" aria-label="Back">${I.back}</button><div class="steps" style="width:90px"><i class="on"></i><i></i></div></div>
+    <div class="stack g8"><h1 class="h1">About you</h1><p class="body muted" style="margin:0">Your advisor will mention your name to every client you refer.</p></div>
+    <div><div class="f-label">First name</div><div class="field"><input id="p_first" autocomplete="given-name" value="${esc(p.first)}"></div></div>
+    <div><div class="f-label">Last name</div><div class="field"><input id="p_last" autocomplete="family-name" value="${esc(p.last)}"></div></div>
+    <div><div class="f-label">Agency</div><div class="field"><input id="p_agency" placeholder="e.g. Marina Homes Real Estate" value="${esc(p.agency)}"></div></div>
+    <div><div class="f-label">Broker card number (BRN) <span class="opt">Optional</span></div><div class="field"><input id="p_brn" inputmode="numeric" placeholder="e.g. 41235" value="${esc(p.brn)}"></div><div class="hint">Issued by RERA. Speeds up commission payouts.</div></div>
+    <button class="btn btn-ink" id="p_next" disabled onclick="go('agreement')" style="margin:8px 0 34px">Continue</button>
+  </div></div></div>`;
+},
+agreement(){
+  const ok=tmp.agree;
+  return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g16">
+    <div class="row between"><button class="back" onclick="go('profile')" aria-label="Back">${I.back}</button><div class="steps" style="width:90px"><i class="on"></i><i class="on"></i></div></div>
+    <div class="stack g8"><h1 class="h1">Your referral terms</h1><p class="body muted" style="margin:0">The key points of the Lenty referral agreement.</p></div>
+    <div class="card pad stack g4">
+      <div class="kv"><span>Your commission</span><span>0.3% of the loan amount</span></div>
+      <div class="kv"><span>Example</span><span class="num">AED 1.6M loan → AED 4,800</span></div>
+      <div class="kv"><span>Paid</span><span>45 days after disbursal</span></div>
+      <div class="kv"><span>Lead protection</span><span>90 days from referral</span></div>
+      <div class="kv"><span>Cost to your client</span><span>AED 0</span></div>
+    </div>
+    <button class="link" style="text-align:left" onclick="agreementSheet()">Read the full agreement</button>
+    <button class="check ${ok?'on':''}" onclick="tmp.agree=!tmp.agree;render()"><span class="box">${I.check}</span><span>I have read and accept the Lenty referral agreement.</span></button>
+    <button class="btn btn-ink" ${ok?'':'disabled'} onclick="finishSignup()" style="margin:8px 0 34px">Start referring</button>
+  </div></div></div>`;
+},
+today(){
+  const act=S.deals.filter(d=>d.status==='active');
+  const pipeline=act.reduce((a,d)=>a+comm(d),0);
+  const pend=S.deals.filter(d=>d.status==='payout');
+  const pendSum=pend.reduce((a,d)=>a+comm(d),0);
+  const next=pend.sort((a,b)=>payoutAt(a)-payoutAt(b))[0];
+  const paid=S.deals.filter(d=>d.status==='paid').reduce((a,d)=>a+comm(d),0);
+  const att=attention().slice(0,3);
+  const unread=S.deals.reduce((a,d)=>a+d.updates.filter(u=>u.at>S.seen).length,0);
+  return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g20">
+    <div class="row between" style="align-items:flex-start;padding-top:6px">
+      <div class="stack g4"><span style="color:var(--ink);margin-bottom:6px">${LOGO(20)}</span><span class="small muted">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</span><h1 class="h1">${greet()},<br>${esc(S.user.first)}</h1></div>
+      <div class="row" style="gap:8px"><button class="iconbtn" onclick="updatesSheet()" aria-label="Updates">${I.bell}${unread?'<span class="dot"></span>':''}</button><button class="avatar round ink" style="width:42px;height:42px" onclick="go('account')" aria-label="Account">${ini(S.user.first,S.user.last)}</button></div>
+    </div>
+    <button class="hero" onclick="go('wallet')"><div class="aurora"></div>
+      <div class="lbl">Commission in your pipeline</div>
+      <div class="big num" style="margin-top:6px">${aed(pipeline)}</div>
+      <div class="lbl" style="margin-top:6px">${act.length} active deal${act.length===1?'':'s'} · 0.3% of each loan</div>
+      <div class="split"><div><span class="lbl">Next payout</span><b class="num">${next?aed(comm(next)):'—'}</b><span class="lbl">${next?date(payoutAt(next)):'No payouts due'}</span></div><div><span class="lbl">Paid to you</span><b class="num">${aed(paid)}</b><span class="lbl">this year</span></div></div>
+    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-accent btn-sm" onclick="startRefer()">${I.plus} Refer a client</button>
+      <button class="btn btn-line btn-sm" onclick="go('check')">${I.gauge} Quick check</button>
+    </div>
+    ${att.length?`<div class="stack g10"><div class="label">Needs your attention</div><div class="card" style="overflow:hidden">${att.map(a=>`<button class="item" onclick="go('deal',{id:'${a.d.id}'})"><span class="pill ${a.k==='info'?'':a.k}" style="width:32px;height:32px;padding:0;justify-content:center;border-radius:10px">${a.k==='warn'?I.alert:a.k==='good'?I.spark:I.info}</span><span class="grow"><span style="display:block;font-weight:600;font-size:14.5px">${a.t}</span><span class="small muted">${a.s}</span></span>${I.chev}</button>`).join('')}</div></div>`:''}
+    <div class="stack g10"><div class="row between"><span class="label">Deals in progress</span>${S.deals.length?`<button class="link" onclick="go('deals')">All deals</button>`:''}</div>
+      ${act.length?`<div class="card" style="overflow:hidden">${act.slice(0,3).map(dealRow).join('')}</div>`:
+      `<div class="card pad stack g12" style="align-items:flex-start"><span class="serif" style="font-size:20px">Your first referral</span><p class="body muted" style="margin:0">Add a client in under a minute. You'll follow every step from the first call to the keys, and see your commission grow here.</p><button class="btn btn-ink btn-sm" style="width:auto;padding:0 18px" onclick="startRefer()">${I.plus} Refer a client</button></div>`}
+    </div>
+    <button class="card pad row" style="text-align:left" onclick="go('link')"><span class="avatar" style="border-radius:12px">${I.qr}</span><span class="grow"><span style="display:block;font-weight:600">Your referral link</span><span class="small muted num">${refLink()}</span></span>${I.chev}</button>
+  </div><div class="dock-space"></div></div>${dock()}</div>`;
+},
+deals(){
+  const f=tmp.dealTab||'active';
+  const groups={active:d=>d.status==='active'||d.status==='paused',payout:d=>d.status==='payout',paid:d=>d.status==='paid',lost:d=>d.status==='lost'};
+  const labels={active:'In progress',payout:'Awaiting payout',paid:'Paid',lost:'Not proceeding'};
+  const list=S.deals.filter(groups[f]).sort((a,b)=>b.createdAt-a.createdAt);
+  return `<div class="view"><div class="top"></div>
+  <div class="px row between" style="padding-top:6px;padding-bottom:14px;flex:none"><h1 class="h1">Deals</h1><button class="btn btn-ink btn-sm" style="width:auto;padding:0 14px" onclick="startRefer()">${I.plus} Refer</button></div>
+  <div class="tabs" style="flex:none;padding-bottom:14px">${Object.keys(labels).map(k=>`<button class="${f===k?'on':''}" onclick="tmp.dealTab='${k}';render()">${labels[k]} <span class="n num">${S.deals.filter(groups[k]).length}</span></button>`).join('')}</div>
+  <div class="scroll"><div class="px stack g12">
+    ${S.deals.some(d=>d.sample)?`<div class="sample">${I.info}<span>These are sample deals so you can explore the app. Clear them in Account.</span></div>`:''}
+    ${list.length?`<div class="card" style="overflow:hidden">${list.map(dealRow).join('')}</div>`:`<div class="card pad stack g8" style="text-align:center;padding:32px 22px"><span class="serif" style="font-size:20px">Nothing here yet</span><p class="body muted" style="margin:0">${{active:'Deals you refer appear here while Lenty works on them.',payout:'Once a loan is disbursed, the deal moves here until your commission is paid.',paid:'Deals where your commission has been paid.',lost:'Deals that did not go ahead. You keep the lead protection for 90 days.'}[f]}</p></div>`}
+  </div><div class="dock-space"></div></div>${dock()}</div>`;
+},
+deal(){
+  const d=S.deals.find(x=>x.id===R.params.id);if(!d)return SCREENS.deals();
+  const a=adv(d.advisor),lg=legal(d.legal);
+  const all=d.status==='payout'||d.status==='paid';
+  let tl='';
+  PHASES.forEach((ph,pi)=>{
+    tl+=`<div class="phase-h"><span class="label">${ph[0]}</span>${ph[1]?`<span class="small muted">${ph[1]}</span>`:''}</div><div>`;
+    STAGES.forEach((s,i)=>{if(s.p!==pi)return;const done=all||i<d.stage||(i===7&&d.stage>=7);const cur=!all&&i===d.stage&&d.status==='active';
+      tl+=`<div class="tl ${done?'done':''} ${cur?'cur':''}"><div class="d">${done?I.check:''}</div><div class="grow"><div class="row between"><span class="t1">${s.t}</span><span class="small muted">${s.eta}</span></div>${cur?`<div class="t2">${s.d}</div>`:''}</div></div>`});
+    tl+='</div>';
+  });
+  const payLine=d.status==='paid'?`Paid to your account on ${date(d.paidAt)}`:d.status==='payout'?`Due ${date(payoutAt(d))} · ${daysLeft(d)} of 45 days left`:'Paid 45 days after the loan is disbursed';
+  const prog=d.status==='payout'?Math.min(100,(PAYOUT_DAYS-daysLeft(d))/PAYOUT_DAYS*100):d.status==='paid'?100:0;
+  return `<div class="view"><div class="top"></div>
+  <div class="px row between" style="flex:none;padding-bottom:6px"><button class="back" onclick="go('deals')" aria-label="Back">${I.back}</button><button class="iconbtn" onclick="toast('Opening WhatsApp with ${esc(a.n.split(' ')[0])}')" aria-label="Message advisor" style="color:#16a34a">${I.wa}</button></div>
+  <div class="scroll"><div class="px stack g20">
+    <div class="stack g8">
+      <div class="row" style="gap:14px"><span class="avatar" style="width:52px;height:52px;font-size:16px">${ini(d.first,d.last)}</span><div class="grow"><h1 class="h1" style="font-size:26px">${name(d)}</h1><span class="small muted">${esc(d.type)} · ${esc(d.area||'Dubai')}</span></div></div>
+      <div class="row" style="flex-wrap:wrap;gap:8px">${statusPill(d)}<span class="pill grey num">Loan ${short(d.loan)}</span>${d.sample?'<span class="pill grey">Sample</span>':''}</div>
+    </div>
+    <div class="card pad stack g10">
+      <span class="label">Your commission</span>
+      <div class="serif num" style="font-size:34px;line-height:1">${aed(comm(d))}</div>
+      <span class="small muted num">0.3% × ${aed(d.loan)} loan</span>
+      <div style="height:6px;border-radius:3px;background:var(--line-2);overflow:hidden"><div style="height:100%;width:${prog}%;background:${d.status==='paid'?'var(--good)':'var(--accent)'}"></div></div>
+      <span class="small muted">${payLine}</span>
+    </div>
+    <div class="card pad"><div class="row between" style="margin-bottom:6px"><span class="label">Journey to the keys</span><span class="small muted">${all?'8':Math.min(d.stage+1,8)} of 8</span></div>${tl}</div>
+    <div class="card" style="overflow:hidden">
+      <div class="item"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">Mortgage advisor · ${a.l.join(', ')}</span></span><button class="iconbtn" style="color:#16a34a" onclick="toast('Opening WhatsApp with ${esc(a.n.split(' ')[0])}')" aria-label="WhatsApp">${I.wa}</button></div>
+      <div class="item"><span class="avatar round" style="background:var(--line-2);color:var(--ink-2)">${I.scale.replace('width="22"','width="20"').replace('height="22"','height="20"')}</span><span class="grow"><span style="display:block;font-weight:600">${lg.n}</span><span class="small muted">Lenty legal · contract, NOC, transfer</span></span><button class="iconbtn" style="color:#16a34a" onclick="toast('Opening WhatsApp with ${esc(lg.n.split(' ')[0])}')" aria-label="WhatsApp">${I.wa}</button></div>
+    </div>
+    <div class="card pad stack g12">
+      <div class="row between"><span class="label">Client documents</span><span class="small num" style="font-weight:600">${d.docs} of 6</span></div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">${DOCS.map((_,i)=>`<i style="height:6px;border-radius:3px;background:${i<d.docs?'var(--good)':'var(--line)'}"></i>`).join('')}</div>
+      <div class="stack g4">${DOCS.map((x,i)=>`<div class="row small" style="gap:8px"><span style="color:${i<d.docs?'var(--good)':'#c9c4b4'};display:grid">${I.check}</span><span class="${i<d.docs?'':'muted'}">${x}</span></div>`).join('')}</div>
+      ${d.docs<6?`<button class="btn btn-soft btn-sm" onclick="copy('https://lenty.com/u/${d.id}','Upload link copied. Send it to ${esc(d.first)}')">${I.copy} Copy upload link for ${esc(d.first)}</button><span class="small muted">Your client uploads directly to Lenty. You only see progress, never the files.</span>`:''}
+    </div>
+    <div class="card pad stack g12"><span class="label">Updates</span>
+      ${[...d.updates].reverse().map(u=>`<div class="row" style="align-items:flex-start;gap:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:7px;flex:none"></span><span class="grow"><span class="body" style="display:block">${esc(u.t)}</span><span class="small muted">${ago(u.at)}</span></span></div>`).join('')}
+    </div>
+    <div class="card pad stack g4"><span class="label" style="margin-bottom:4px">Client</span>
+      <div class="kv"><span>Phone</span><span class="num">${esc(d.cc+' '+d.phone)}</span></div>
+      <div class="kv"><span>Residency</span><span>${RES[d.residency]}</span></div>
+      <div class="kv"><span>Property price</span><span class="num">${aed(d.price)}</span></div>
+      <div class="kv"><span>Referred</span><span>${date(d.createdAt)}</span></div>
+      ${d.notes?`<div class="kv"><span>Notes</span><span>${esc(d.notes)}</span></div>`:''}
+    </div>
+    <details class="demo"><summary>${I.down} Prototype controls</summary><div class="stack g8" style="padding-top:8px">
+      ${d.status==='active'?`<button class="btn btn-ink btn-sm" onclick="advance('${d.id}')">Move to next stage</button><button class="btn btn-line btn-sm" onclick="addDoc('${d.id}')">Client uploaded a document</button><button class="btn btn-line btn-sm" onclick="setStatus('${d.id}','lost')">Mark as not proceeding</button>`:''}
+      ${d.status==='payout'?`<button class="btn btn-ink btn-sm" onclick="markPaid('${d.id}')">Mark commission as paid</button>`:''}
+      ${d.status==='lost'?`<button class="btn btn-ink btn-sm" onclick="setStatus('${d.id}','active')">Reopen deal</button>`:''}
+      <button class="btn btn-sm" style="color:var(--bad)" onclick="removeDeal('${d.id}')">Delete deal</button>
+    </div></details>
+  </div><div style="height:40px"></div></div></div>`;
+},
+refer(){
+  const f=tmp.ref,st=tmp.refStep||1;
+  const head=`<div class="px stack g12" style="flex:none;padding-bottom:12px"><div class="row between"><button class="back" onclick="${st>1?'refBack()':'cancelRefer()'}" aria-label="Back">${st>1?I.back:I.close}</button><span class="small muted">Step ${st} of 3</span></div><div class="steps"><i class="on"></i><i class="${st>1?'on':''}"></i><i class="${st>2?'on':''}"></i></div></div>`;
+  const loan=f.price*(1-f.down/100);
+  let body='';
+  if(st===1)body=`<div class="stack g8"><h1 class="h1">Who are you referring?</h1><p class="body muted" style="margin:0">Their advisor will message them on WhatsApp within an hour.</p></div>
+    <div><div class="f-label">First name</div><div class="field"><input id="r_first" autocomplete="off" value="${esc(f.first)}"></div></div>
+    <div><div class="f-label">Last name <span class="opt">Optional</span></div><div class="field"><input id="r_last" autocomplete="off" value="${esc(f.last)}"></div></div>
+    <div><div class="f-label">Mobile number</div><div class="field"><button class="cc" onclick="pickCountry('ref')"><span style="font-size:20px">${f.cc.f}</span>${f.cc.c}</button><input id="r_phone" inputmode="tel" placeholder="50 123 4567" value="${esc(f.phone)}"></div></div>
+    <div><div class="f-label">Email <span class="opt">Optional</span></div><div class="field"><input id="r_email" type="email" inputmode="email" value="${esc(f.email)}"></div></div>
+    <button class="link" style="text-align:left" onclick="contactsSheet()">Pick from phone contacts</button>`;
+  if(st===2)body=`<div class="stack g8"><h1 class="h1">What are they buying?</h1><p class="body muted" style="margin:0">A rough idea is enough. It helps Lenty prepare before the first call.</p></div>
+    <div><div class="f-label">Residency</div><div class="seg">${Object.entries(RES).map(([k,v])=>`<button class="${f.residency===k?'on':''}" onclick="refSave();tmp.ref.residency='${k}';tmp.ref.down=${'{national:15,resident:20,nonresident:40}'}['${k}'];render()">${v}</button>`).join('')}</div></div>
+    <div><div class="f-label">Property type</div><div class="field"><select id="r_type">${TYPES.map(t=>`<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>${I.down}</div></div>
+    <div><div class="f-label">Property price</div><div class="field"><input id="r_price" inputmode="numeric" value="${f.price?fmt(f.price):''}" placeholder="e.g. 1,800,000"><span class="suf">AED</span></div></div>
+    <div><div class="f-label">Down payment <span class="opt num" id="r_downv">${f.down}%</span></div><input type="range" id="r_down" min="${{national:15,resident:20,nonresident:40}[f.residency]}" max="80" step="5" value="${f.down}"></div>
+    <div><div class="f-label">Area <span class="opt">Optional</span></div><div class="field"><input id="r_area" placeholder="e.g. Dubai Marina" value="${esc(f.area)}"></div></div>
+    <div class="card pad row" style="background:var(--accent-soft);border-color:transparent"><span class="grow"><span class="small" style="color:var(--accent-ink);font-weight:600">Your estimated commission</span><span class="serif num" id="r_comm" style="display:block;font-size:26px;color:var(--ink)">${aed(loan*RATE)}</span><span class="small muted num" id="r_loan">0.3% of a ${aed(loan)} loan</span></span></div>`;
+  if(st===3){const a=adv(f.advisor);body=`<div class="stack g8"><h1 class="h1">Who should call ${esc(f.first)}?</h1><p class="body muted" style="margin:0">We match an advisor who speaks your client's language.</p></div>
+    <div><div class="f-label">Client's preferred language</div><div class="field"><select id="r_lang">${LANGS.map(l=>`<option ${f.lang===l?'selected':''}>${l}</option>`).join('')}</select>${I.down}</div></div>
+    <button class="card pad row" style="text-align:left" onclick="advisorSheet()"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span class="small muted">Mortgage advisor</span><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">${a.l.join(', ')}</span></span><span class="link">Change</span></button>
+    <div><div class="f-label">Notes for the advisor <span class="opt">Optional</span></div><textarea class="area" id="r_notes" placeholder="Viewing on Saturday, self-employed, wants a 5-year fixed rate…">${esc(f.notes)}</textarea></div>
+    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div></div>
+    <button class="check ${f.consent?'on':''}" onclick="refSave();tmp.ref.consent=!tmp.ref.consent;render()"><span class="box">${I.check}</span><span>${esc(f.first)} agreed that Lenty can contact them about a mortgage.</span></button>`;}
+  const ok=st===1?(f.first.trim()&&f.phone.replace(/\D/g,'').length>=7):st===2?f.price>0:f.consent;
+  return `<div class="view"><div class="top"></div>${head}<div class="scroll"><div class="px stack g16" style="padding-bottom:20px">${body}</div></div>
+  <div class="px" style="padding-top:10px;padding-bottom:34px;flex:none;border-top:1px solid var(--line-2);background:var(--ground)"><button class="btn btn-ink" id="r_next" ${ok?'':'disabled'} onclick="${st<3?'refNext()':'submitRefer()'}">${st<3?'Continue':'Send to Lenty'}</button></div></div>`;
+},
+done(){
+  const d=S.deals.find(x=>x.id===R.params.id);const a=adv(d.advisor);
+  return `<div class="view" style="background:var(--ink);color:var(--cream);overflow:hidden"><div class="aurora" style="inset:-40% -40% 50% -40%;opacity:.45"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 15%,var(--ink) 55%)"></div>
+  <div class="top"></div>
+  <div class="px stack g20" style="position:relative;flex:1;justify-content:flex-end;padding-bottom:36px">
+    <div style="width:72px;height:72px;border-radius:24px;background:var(--cream);color:var(--ink);display:grid;place-items:center">${I.checkLg}</div>
+    <h1 class="serif" style="font-size:34px;line-height:1.1;margin:0">${esc(d.first)} is with Lenty now.</h1>
+    <div class="stack g12">
+      ${[['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 48 hours','Best 3 bank offers shortlisted'],['Every step','You get an update here, all the way to the keys'],['45 days after disbursal',`${aed(comm(d))} paid to you`]].map(([t,s])=>`<div class="row" style="align-items:flex-start;gap:14px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
+    </div>
+    <div class="stack g10" style="margin-top:6px"><button class="btn btn-white" onclick="go('deal',{id:'${d.id}'})">Open deal</button><button class="btn" style="color:var(--cream)" onclick="go('today')">Back to Today</button></div>
+  </div></div>`;
+},
+wallet(){
+  const act=S.deals.filter(d=>d.status==='active'),pay=S.deals.filter(d=>d.status==='payout').sort((a,b)=>payoutAt(a)-payoutAt(b)),paid=S.deals.filter(d=>d.status==='paid').sort((a,b)=>b.paidAt-a.paidAt);
+  const sum=l=>l.reduce((a,d)=>a+comm(d),0);
+  const row=(d,right,sub)=>`<button class="item" onclick="go('deal',{id:'${d.id}'})"><span class="grow"><span style="display:block;font-weight:600">${name(d)}</span><span class="small muted num">${sub}</span></span><span class="num" style="font-weight:700;text-align:right">${aed(comm(d))}<span class="small muted" style="display:block;font-weight:500">${right}</span></span></button>`;
+  return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g20">
+    <h1 class="h1" style="padding-top:6px">Wallet</h1>
+    <div class="hero" style="cursor:default"><div class="aurora"></div>
+      <div class="lbl">Paid to you this year</div><div class="big num" style="margin-top:6px">${aed(sum(paid))}</div>
+      <div class="split"><div><span class="lbl">Awaiting payout</span><b class="num">${aed(sum(pay))}</b><span class="lbl">${pay.length} deal${pay.length===1?'':'s'}</span></div><div><span class="lbl">In pipeline</span><b class="num">${aed(sum(act))}</b><span class="lbl">${act.length} deal${act.length===1?'':'s'}</span></div></div>
+    </div>
+    <div class="card pad row" style="gap:14px"><span class="serif num" style="font-size:28px;color:var(--accent-ink)">0.3%</span><span class="small muted">of the loan amount on every deal, paid ${PAYOUT_DAYS} days after the bank disburses the loan. Same rate for every partner.</span></div>
+    ${pay.length?`<div class="stack g10"><span class="label">Awaiting payout</span><div class="card" style="overflow:hidden">${pay.map(d=>row(d,date(payoutAt(d)),`Disbursed ${date(d.disbursedAt)} · ${daysLeft(d)} days left`)).join('')}</div></div>`:''}
+    ${act.length?`<div class="stack g10"><span class="label">In pipeline</span><div class="card" style="overflow:hidden">${act.map(d=>row(d,'expected',`${STAGES[d.stage].t} · loan ${short(d.loan)}`)).join('')}</div></div>`:''}
+    ${paid.length?`<div class="stack g10"><span class="label">Paid</span><div class="card" style="overflow:hidden">${paid.map(d=>row(d,date(d.paidAt),`Loan ${short(d.loan)}`)).join('')}</div></div>`:''}
+    <div class="stack g10"><span class="label">Payout account</span>
+      <button class="card pad row" style="text-align:left" onclick="ibanSheet()"><span class="avatar" style="border-radius:12px">${I.wallet}</span><span class="grow"><span style="display:block;font-weight:600">${S.user.iban?'Bank account':'Add your bank account'}</span><span class="small muted num">${S.user.iban?esc(S.user.iban.slice(0,4)+' •••• '+S.user.iban.slice(-4)):'Needed before your first payout'}</span></span>${I.chev}</button>
+    </div>
+    ${!S.deals.length?`<div class="card pad stack g8" style="text-align:center"><span class="serif" style="font-size:20px">No commission yet</span><p class="body muted" style="margin:0">Refer your first client to start earning 0.3% of their loan.</p></div>`:''}
+  </div><div class="dock-space"></div></div>${dock()}</div>`;
+},
+tools(){
+  const t=(ic,title,sub,act)=>`<button class="tool" onclick="${act}"><span class="ic">${I[ic]}</span><span class="grow"><span style="display:block;font-weight:600;font-size:15.5px">${title}</span><span class="small muted">${sub}</span></span>${I.chev}</button>`;
+  return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g20">
+    <h1 class="h1" style="padding-top:6px">Tools</h1>
+    <div class="stack g10"><span class="label">Before the viewing</span><div class="card" style="overflow:hidden">
+      ${t('gauge','Quick check','Can your client afford it? UAE Central Bank rules, 2 minutes.',"go('check')")}
+      ${t('calc','Repayments & costs','Monthly payment and cash needed on transfer day.',"go('calc')")}
+    </div></div>
+    <div class="stack g10"><span class="label">Share with clients</span><div class="card" style="overflow:hidden">
+      ${t('qr','Your link & QR code','Clients refer themselves. The lead is yours for 90 days.',"go('link')")}
+      ${t('rates','This week\'s rates','A rate card with your name, ready for WhatsApp.',"go('rates')")}
+    </div></div>
+    <div class="stack g10"><span class="label">Your partnership</span><div class="card" style="overflow:hidden">
+      ${t('doc','Referral agreement','0.3% of the loan · paid 45 days after disbursal.','agreementSheet()')}
+      ${t('user','Account','Profile, payout account, notifications.',"go('account')")}
+    </div></div>
+  </div><div class="dock-space"></div></div>${dock()}</div>`;
+},
+check(){
+  const c=tmp.chk||(tmp.chk={res:'resident',income:35000,debts:2500,age:38,price:2000000,down:20,rate:4.25});
+  const minDown={national:15,resident:20,nonresident:40}[c.res];
+  const ltvCap=c.res==='nonresident'?60:c.price>5e6?(c.res==='national'?75:70):(c.res==='national'?85:80);
+  const maxAge=c.res==='national'?70:65;
+  const years=Math.max(1,Math.min(25,maxAge-c.age));
+  const r=c.rate/1200,n=years*12,pmtF=r?r/(1-Math.pow(1+r,-n)):1/n;
+  const room=c.income*0.5-c.debts;
+  const maxLoanDbr=Math.max(0,room/pmtF);
+  const loan=c.price*(1-c.down/100);
+  const pay=loan*pmtF;
+  const dbr=c.income?(c.debts+pay)/c.income*100:0;
+  const ltvOk=c.down>=100-ltvCap;
+  const maxPrice=Math.min(maxLoanDbr/(1-c.down/100),Infinity);
+  let k,v,s;
+  if(!ltvOk){k='bad';v='Down payment too low';s=`For a ${RES[c.res]} buying at this price, banks lend up to ${ltvCap}%. Your client needs at least ${100-ltvCap}% down (${aed(c.price*(100-ltvCap)/100)}).`}
+  else if(dbr<=42){k='good';v='Looks affordable';s=`Total debt payments would be ${dbr.toFixed(0)}% of income, within the 50% limit. Refer now to lock in a pre-approval.`}
+  else if(dbr<=50){k='warn';v='Tight, but possible';s=`Debt payments would be ${dbr.toFixed(0)}% of income, close to the 50% limit. A longer term or a larger down payment helps.`}
+  else{k='bad';v='Above the 50% limit';s=`Debt payments would be ${dbr.toFixed(0)}% of income. With these numbers your client can borrow up to ${aed(maxLoanDbr)}.`}
+  const fld=(id,label,val,suf,hint)=>`<div><div class="f-label">${label}</div><div class="field"><input id="${id}" inputmode="decimal" value="${val}"><span class="suf">${suf}</span></div>${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+  return `<div class="view"><div class="top"></div>
+  <div class="px row" style="flex:none;padding-bottom:8px"><button class="back" onclick="go('tools')" aria-label="Back">${I.back}</button></div>
+  <div class="scroll"><div class="px stack g16">
+    <div class="stack g8"><h1 class="h1">Quick check</h1><p class="body muted" style="margin:0">Know before the viewing whether a bank is likely to lend.</p></div>
+    <div class="verdict ${k}"><span class="v">${v}</span><span class="body" style="color:var(--ink-2)">${s}</span></div>
+    <div class="card pad stack g4">
+      <div class="kv"><span>Monthly payment</span><span class="num">${aed(pay)}</span></div>
+      <div class="kv"><span>Debt-to-income</span><span class="num">${dbr.toFixed(1)}% <span class="muted" style="font-weight:400">/ 50%</span></span></div>
+      <div class="kv"><span>Max loan on this income</span><span class="num">${aed(maxLoanDbr)}</span></div>
+      <div class="kv"><span>Max property price</span><span class="num">${aed(maxPrice)}</span></div>
+      <div class="kv"><span>Term</span><span class="num">${years} years</span></div>
+    </div>
+    <div><div class="f-label">Residency</div><div class="seg">${Object.entries(RES).map(([k2,v2])=>`<button class="${c.res===k2?'on':''}" onclick="tmp.chk.res='${k2}';tmp.chk.down=Math.max(tmp.chk.down,${'{national:15,resident:20,nonresident:40}'}['${k2}']);render()">${v2}</button>`).join('')}</div></div>
+    ${fld('c_income','Gross monthly income',fmt(c.income),'AED','Salary plus regular allowances.')}
+    ${fld('c_debts','Existing monthly debts',fmt(c.debts),'AED','Loan payments plus 5% of total credit card limits.')}
+    ${fld('c_price','Property price',fmt(c.price),'AED')}
+    <div><div class="f-label">Down payment <span class="opt num">${c.down}% · ${aed(c.price*c.down/100)}</span></div><input type="range" id="c_down" min="${minDown}" max="80" step="5" value="${c.down}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${fld('c_age','Client age',c.age,'yrs')}${fld('c_rate','Interest rate',c.rate,'%')}</div>
+    <p class="small muted" style="margin:0">Based on UAE Central Bank rules: total debt payments up to 50% of income; loan-to-value up to 80% for residents, 85% for nationals (first home under AED 5M), and typically 60% for non-residents; loans end by age 65 (residents) or 70 (nationals). Indicative only, final terms depend on the bank.</p>
+    <button class="btn btn-ink" onclick="startRefer({price:${Math.round(c.price)},residency:'${c.res}',down:${c.down}})">Refer this client</button>
+  </div><div style="height:40px"></div></div></div>`;
+},
+calc(){
+  const c=tmp.calc||(tmp.calc={price:2000000,down:20,years:25,rate:4.25});
+  const loan=c.price*(1-c.down/100),r=c.rate/1200,n=c.years*12;
+  const pay=r?loan*r/(1-Math.pow(1+r,-n)):loan/n;
+  const dld=c.price*0.04+580,reg=loan*0.0025+290,val=3000,bank=Math.min(loan*0.01,20000);
+  const cash=c.price*c.down/100+dld+reg+val+bank;
+  return `<div class="view"><div class="top"></div>
+  <div class="px row" style="flex:none;padding-bottom:8px"><button class="back" onclick="go('tools')" aria-label="Back">${I.back}</button></div>
+  <div class="scroll"><div class="px stack g16">
+    <div class="stack g8"><h1 class="h1">Repayments & costs</h1></div>
+    <div class="hero" style="cursor:default"><div class="aurora"></div><div class="lbl">Monthly payment</div><div class="big num" style="margin-top:6px">${aed(pay)}</div><div class="lbl num" style="margin-top:6px">${aed(loan)} loan · ${c.years} years · ${c.rate}%</div></div>
+    <div><div class="f-label">Property price</div><div class="field"><input id="k_price" inputmode="numeric" value="${fmt(c.price)}"><span class="suf">AED</span></div></div>
+    <div><div class="f-label">Down payment <span class="opt num">${c.down}%</span></div><input type="range" id="k_down" min="15" max="80" step="5" value="${c.down}"></div>
+    <div><div class="f-label">Term <span class="opt num">${c.years} years</span></div><input type="range" id="k_years" min="5" max="25" value="${c.years}"></div>
+    <div><div class="f-label">Interest rate</div><div class="field"><input id="k_rate" inputmode="decimal" value="${c.rate}"><span class="suf">%</span></div></div>
+    <div class="card pad stack g4"><span class="label" style="margin-bottom:4px">Cash needed on transfer day</span>
+      <div class="kv"><span>Down payment</span><span class="num">${aed(c.price*c.down/100)}</span></div>
+      <div class="kv"><span>DLD transfer fee (4% + AED 580)</span><span class="num">${aed(dld)}</span></div>
+      <div class="kv"><span>Mortgage registration (0.25% + AED 290)</span><span class="num">${aed(reg)}</span></div>
+      <div class="kv"><span>Valuation</span><span class="num">${aed(val)}</span></div>
+      <div class="kv"><span>Bank arrangement fee (up to 1%)</span><span class="num">${aed(bank)}</span></div>
+      <div class="kv"><span>Lenty advice & legal</span><span style="color:var(--good)">AED 0</span></div>
+      <div class="kv" style="font-size:16px"><span style="color:var(--ink);font-weight:700">Total</span><span class="num">${aed(cash)}</span></div>
+    </div>
+    <p class="small muted" style="margin:0">Estimate. Trustee office and agency fees are not included.</p>
+    <button class="btn btn-ink" onclick="startRefer({price:${Math.round(c.price)},down:${c.down}})">Refer this client · earn ${aed(loan*RATE)}</button>
+  </div><div style="height:40px"></div></div></div>`;
+},
+link(){
+  const url='https://'+refLink();
+  return `<div class="view"><div class="top"></div>
+  <div class="px row" style="flex:none;padding-bottom:8px"><button class="back" onclick="go(R.tab)" aria-label="Back">${I.back}</button></div>
+  <div class="scroll"><div class="px stack g16">
+    <div class="stack g8"><h1 class="h1">Your link & QR code</h1><p class="body muted" style="margin:0">Show the code at a viewing or share the link. Every client who signs up through it is yours for 90 days.</p></div>
+    <div class="qr" id="qrbox"></div>
+    <div class="card pad row"><span class="grow num" style="font-weight:600;word-break:break-all">${refLink()}</span><button class="btn btn-soft btn-sm" style="width:auto;padding:0 14px" onclick="copy('${url}','Link copied')">${I.copy} Copy</button></div>
+    <div class="card pad stack g10"><span class="label">Message for WhatsApp</span><p class="body" id="wamsg" style="margin:0">Hi! For your mortgage I work with Lenty: free advice, 19 UAE banks compared, and their legal team handles the transfer. Get a free pre-approval here: ${url}</p>
+    <button class="btn btn-line btn-sm" onclick="copy($('#wamsg').textContent,'Message copied')">${I.wa} Copy message</button></div>
+    <div class="card pad stack g4"><div class="kv"><span>Clients via your link</span><span class="num">${S.deals.filter(d=>d.viaLink).length}</span></div><div class="kv"><span>Lead protection</span><span>90 days</span></div></div>
+  </div><div style="height:40px"></div></div></div>`;
+},
+rates(){
+  const rows=[['1-year fixed','3.69%'],['3-year fixed','3.89%'],['5-year fixed','4.05%'],['Variable (EIBOR + margin)','4.29%']];
+  return `<div class="view"><div class="top"></div>
+  <div class="px row" style="flex:none;padding-bottom:8px"><button class="back" onclick="go('tools')" aria-label="Back">${I.back}</button></div>
+  <div class="scroll"><div class="px stack g16">
+    <div class="stack g8"><h1 class="h1">This week's rates</h1><p class="body muted" style="margin:0">Send this card to clients. It carries your name next to Lenty's.</p></div>
+    <div class="ratecard"><div class="aurora" style="opacity:.3"></div>
+      <div class="row between" style="position:relative;margin-bottom:14px"><span style="color:var(--cream)">${LOGO(24)}</span><span style="font-size:12px;color:rgba(255,255,255,.7)">Week of ${date(Date.now())}</span></div>
+      <div class="serif" style="font-size:24px;position:relative;margin-bottom:10px">Mortgage rates from</div>
+      ${rows.map(([a,b])=>`<div class="rate-row"><span style="color:rgba(255,255,255,.8)">${a}</span><span class="num" style="font-weight:700">${b}</span></div>`).join('')}
+      <div class="row" style="position:relative;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12)"><span class="avatar round" style="background:#fff;color:var(--ink)">${ini(S.user.first,S.user.last)}</span><span><span style="display:block;font-weight:600">${esc(S.user.first+' '+S.user.last)}</span><span style="font-size:13px;color:rgba(255,255,255,.7)">${esc(S.user.agency||'Real estate agent')} · ${refLink()}</span></span></div>
+    </div>
+    <div class="sample">${I.info}<span>Sample rates for the prototype. In the real app they come from Lenty's weekly bank panel.</span></div>
+    <button class="btn btn-ink" onclick="copy('Lenty mortgage rates this week: ${rows.map(r=>r.join(' ')).join(', ')}. Free pre-approval: https://${refLink()}','Rate card copied for WhatsApp')">${I.wa} Share rate card</button>
+  </div><div style="height:40px"></div></div></div>`;
+},
+account(){
+  const u=S.user;
+  const tg=(k,t,s)=>`<div class="item"><span class="grow"><span style="display:block;font-weight:600">${t}</span><span class="small muted">${s}</span></span><button class="toggle ${S.notif[k]?'on':''}" aria-label="${t}" onclick="S.notif['${k}']=!S.notif['${k}'];save();this.classList.toggle('on')"></button></div>`;
+  return `<div class="view"><div class="top"></div>
+  <div class="px row" style="flex:none;padding-bottom:8px"><button class="back" onclick="go(R.tab)" aria-label="Back">${I.back}</button></div>
+  <div class="scroll"><div class="px stack g20">
+    <div class="row" style="gap:14px"><span class="avatar round ink" style="width:60px;height:60px;font-size:18px">${ini(u.first,u.last)}</span><div><h1 class="h1" style="font-size:26px">${esc(u.first+' '+u.last)}</h1><span class="small muted">${esc(u.agency)}${u.brn?' · BRN '+esc(u.brn):''}</span></div></div>
+    <div class="card pad stack g4"><div class="kv"><span>Mobile</span><span class="num">${esc(u.cc+' '+u.phone)}</span></div><div class="kv"><span>Partner since</span><span>${date(u.since)}</span></div><div class="kv"><span>Referral link</span><span class="num">${refLink()}</span></div></div>
+    <button class="btn btn-line btn-sm" onclick="editProfileSheet()">Edit profile</button>
+    <div class="stack g10"><span class="label">Notifications</span><div class="card" style="overflow:hidden">${tg('push','Push notifications','Every stage change and payout')}${tg('wa','WhatsApp summary','A daily digest of your deals')}${tg('email','Monthly statement','Commission statement by email')}</div></div>
+    <div class="stack g10"><span class="label">Help</span><div class="card" style="overflow:hidden">
+      <button class="item" onclick="contactSheet()"><span class="grow" style="font-weight:600">Contact the partner team</span>${I.chev}</button>
+      <button class="item" onclick="agreementSheet()"><span class="grow" style="font-weight:600">Referral agreement</span>${I.chev}</button>
+    </div></div>
+    <div class="stack g10"><span class="label">Prototype</span><div class="card" style="overflow:hidden">
+      <button class="item" onclick="S.deals=S.deals.filter(d=>!d.sample);save();toast('Sample deals cleared');render()"><span class="grow" style="font-weight:600">Clear sample deals</span></button>
+      <button class="item" onclick="S.deals=S.deals.filter(d=>!d.sample).concat(sampleDeals());save();toast('Sample deals added');render()"><span class="grow" style="font-weight:600">Load sample deals</span></button>
+      <button class="item" onclick="resetAll()"><span class="grow" style="font-weight:600;color:var(--bad)">Reset everything</span></button>
+    </div></div>
+    <button class="btn btn-line" onclick="logout()">${I.logout} Log out</button>
+    <div class="stack g4" style="align-items:center;color:var(--ink);padding:8px 0"><span>${LOGO(26)}</span><span class="small muted">Partners · prototype 2.1</span></div>
+  </div><div style="height:40px"></div></div></div>`;
+},
+};
+function dealRow(d){
+  return `<button class="deal" onclick="go('deal',{id:'${d.id}'})">
+    <div class="row"><span class="avatar">${ini(d.first,d.last)}</span><span class="grow"><span class="row between" style="gap:8px"><b style="font-size:15.5px;font-weight:600">${name(d)}</b><span class="num" style="font-weight:700;font-size:14.5px">${aed(comm(d))}</span></span><span class="row between" style="gap:8px;margin-top:2px"><span class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.area||d.type)} · ${short(d.loan)}</span><span class="small muted" style="flex:none">${ago(d.updates.length?d.updates[d.updates.length-1].at:d.createdAt)}</span></span></span></div>
+    ${jbar(d)}
+    <div>${statusPill(d)}</div>
+  </button>`;
+}
+
+/* ================= After-render hooks ================= */
+const AFTER={
+phone(){const ph=$('#ph'),b=$('#cont');const upd=()=>{const d=ph.value.replace(/\D/g,'').slice(0,12);ph.value=d.replace(/^(\d{2,3})(\d{0,3})(\d{0,6})$/,(m,a,b2,c)=>[a,b2,c].filter(Boolean).join(' '));tmp.phone=ph.value;b.disabled=d.length<7};ph.addEventListener('input',upd);upd();setTimeout(()=>ph.focus(),250);ph.addEventListener('keydown',e=>{if(e.key==='Enter'&&!b.disabled)go('otp')})},
+otp(){
+  const ins=[...document.querySelectorAll('#otp input')],b=$('#confirm');
+  const ck=()=>{b.disabled=ins.some(i=>!i.value)};
+  ins.forEach((inp,i)=>{
+    inp.addEventListener('input',()=>{inp.value=inp.value.replace(/\D/g,'').slice(-1);if(inp.value&&i<5)ins[i+1].focus();ck();if(!b.disabled)setTimeout(verify,200)});
+    inp.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!inp.value&&i>0){ins[i-1].focus();ins[i-1].value='';ck()}});
+    inp.addEventListener('paste',e=>{e.preventDefault();const d=(e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);d.split('').forEach((c,j)=>ins[j]&&(ins[j].value=c));ins[Math.min(d.length,5)].focus();ck();if(!b.disabled)setTimeout(verify,200)});
+  });
+  setTimeout(()=>ins[0].focus(),250);
+  let t=45;const rs=$('#resend');const draw=()=>{rs.innerHTML=t>0?`Resend code in <span class="num">0:${String(t).padStart(2,'0')}</span>`:`<button class="link" onclick="toast('New code sent');render()">Resend code</button>`};
+  draw();tmp.timer=setInterval(()=>{t--;draw();if(t<=0)clearInterval(tmp.timer)},1000);
+},
+profile(){const p=tmp.prof,b=$('#p_next');const ids=['first','last','agency','brn'];const upd=()=>{ids.forEach(k=>p[k]=$('#p_'+k).value);b.disabled=!(p.first.trim()&&p.last.trim()&&p.agency.trim())};ids.forEach(k=>$('#p_'+k).addEventListener('input',upd));upd()},
+refer(){
+  const f=tmp.ref,st=tmp.refStep||1,b=$('#r_next');
+  if(st===1){const upd=()=>{refSave();b.disabled=!(f.first.trim()&&f.phone.replace(/\D/g,'').length>=7)};['first','last','phone','email'].forEach(k=>$('#r_'+k).addEventListener('input',upd));setTimeout(()=>{if(!f.first)$('#r_first').focus()},250)}
+  if(st===2){
+    const pr=$('#r_price'),dn=$('#r_down');
+    const upd=()=>{refSave();const loan=f.price*(1-f.down/100);$('#r_comm').textContent=aed(loan*RATE);$('#r_loan').textContent='0.3% of a '+aed(loan)+' loan';$('#r_downv').textContent=f.down+'%';b.disabled=!(f.price>0)};
+    pr.addEventListener('input',upd);pr.addEventListener('blur',()=>{if(f.price)pr.value=fmt(f.price)});dn.addEventListener('input',upd);$('#r_area').addEventListener('input',upd);$('#r_type').addEventListener('change',upd);
+  }
+  if(st===3){
+    $('#r_lang').addEventListener('change',e=>{refSave();f.lang=e.target.value;const m=ADVISORS.find(a=>a.l.includes(f.lang));if(m)f.advisor=m.id;render()});
+    $('#r_notes').addEventListener('input',refSave);
+  }
+},
+check(){
+  const C=tmp.chk;
+  const bind=(id,k)=>{const el=$('#'+id);let t;el.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{C[k]=num(el.value);const sc=$('#app .scroll').scrollTop;render();$('#app .scroll').scrollTop=sc;const n=$('#'+id);n.focus();n.setSelectionRange(n.value.length,n.value.length)},600)})};
+  bind('c_income','income');bind('c_debts','debts');bind('c_price','price');bind('c_age','age');bind('c_rate','rate');
+  const dn=$('#c_down');dn.addEventListener('change',()=>{C.down=+dn.value;const sc=$('#app .scroll').scrollTop;render();$('#app .scroll').scrollTop=sc});
+},
+calc(){
+  const C=tmp.calc;const keep=fn=>{const sc=$('#app .scroll').scrollTop;fn();render();$('#app .scroll').scrollTop=sc};
+  const bind=(id,k)=>{const el=$('#'+id);let t;el.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{keep(()=>C[k]=num(el.value));const n=$('#'+id);n.focus();n.setSelectionRange(n.value.length,n.value.length)},600)})};
+  bind('k_price','price');bind('k_rate','rate');
+  ['down','years'].forEach(k=>{const el=$('#k_'+k);el.addEventListener('change',()=>keep(()=>C[k]=+el.value))});
+},
+link(){
+  const box=$('#qrbox');const url='https://'+refLink();
+  try{const q=qrcode(0,'M');q.addData(url);q.make();box.innerHTML=q.createSvgTag({cellSize:4,margin:0,scalable:true})}
+  catch(e){box.innerHTML=`<div class="small muted" style="padding:60px 0">QR code needs an internet connection.</div>`}
+},
+};
+
+/* ================= Actions ================= */
+function pickCountry(target){sheet(sheetHead('Country code')+`<div class="scroll" style="padding:0 20px 30px"><div class="card" style="overflow:hidden">${COUNTRIES.map((c,i)=>`<button class="item" onclick="setCountry('${target}',${i})"><span style="font-size:22px">${c.f}</span><span class="grow" style="font-weight:500">${c.n}</span><span class="muted num">${c.c}</span></button>`).join('')}</div></div>`,'tall')}
+function setCountry(target,i){closeSheet();if(target==='auth'){tmp.cc=COUNTRIES[i]}else{refSave();tmp.ref.cc=COUNTRIES[i]}render()}
+function verify(){
+  const b=$('#confirm');if(!b||b.disabled)return;b.textContent='Verifying…';
+  setTimeout(()=>{
+    const cc=(tmp.cc||COUNTRIES[0]).c,phone=tmp.phone;
+    if(S.saved&&S.saved.phone===phone){S.user=S.saved;if(!S.deals.length)S.deals=sampleDeals();save();go('today');return}
+    tmp.auth={cc,phone};go('profile');
+  },500);
+}
+function finishSignup(){
+  const p=tmp.prof;S.user={first:p.first.trim(),last:p.last.trim(),agency:p.agency.trim(),brn:p.brn.trim(),...tmp.auth,since:Date.now(),iban:''};
+  S.saved=S.user;S.deals=sampleDeals();S.seen=0;save();go('today');setTimeout(()=>toast('Welcome to Lenty Partners, '+S.user.first),300);
+}
+function logout(){S.user=null;save();go('welcome')}
+function resetAll(){try{localStorage.removeItem(KEY)}catch(e){}S=fresh();tmp.agree=false;tmp.prof=null;go('welcome')}
+
+function startRefer(pre={}){
+  tmp.ref=Object.assign({first:'',last:'',cc:COUNTRIES[0],phone:'',email:'',residency:'resident',type:TYPES[0],price:0,down:20,area:'',lang:'English',advisor:'a4',notes:'',consent:false},pre);
+  tmp.refStep=1;tmp.refFrom=R.screen==='refer'?R.tab:R.screen;go('refer');
+}
+function cancelRefer(){go(TABS.includes(tmp.refFrom)?tmp.refFrom:R.tab)}
+function refSave(){
+  const f=tmp.ref,v=id=>{const e=$('#r_'+id);return e?e.value:null};
+  ['first','last','phone','email','area','notes','type'].forEach(k=>{const x=v(k);if(x!==null)f[k]=x});
+  if(v('price')!==null)f.price=num(v('price'));if(v('down')!==null)f.down=+v('down');
+}
+function refNext(){refSave();tmp.refStep++;go('refer')}
+function refBack(){refSave();tmp.refStep--;go('refer')}
+function submitRefer(){
+  refSave();const f=tmp.ref,now=Date.now(),a=adv(f.advisor);
+  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
+  S.deals.push(d);save();$('#r_next').textContent='Sending…';setTimeout(()=>go('done',{id:d.id}),600);
+}
+function contactsSheet(){
+  const C=[['Maria','Santos','+971','52 334 1189'],['Liam','O\'Connor','+44','7911 123 456'],['Priya','Nair','+91','98450 11223'],['Khalid','Al Mansoori','+971','50 998 2210']];
+  sheet(sheetHead('Choose a contact')+`<div class="scroll" style="padding:0 20px 30px"><div class="card" style="overflow:hidden">${C.map(c=>`<button class="item" onclick="pickContact('${c[0]}','${c[1].replace("'","\\'")}','${c[2]}','${c[3]}')"><span class="avatar round">${ini(c[0],c[1])}</span><span class="grow"><span style="display:block;font-weight:600">${esc(c[0]+' '+c[1])}</span><span class="small muted num">${c[2]} ${c[3]}</span></span></button>`).join('')}</div><p class="small muted">Sample contacts for the prototype.</p></div>`);
+}
+function pickContact(fi,la,cc,ph){Object.assign(tmp.ref,{first:fi,last:la,cc:COUNTRIES.find(x=>x.c===cc),phone:ph});closeSheet();render()}
+function advisorSheet(){
+  sheet(sheetHead('Choose an advisor')+`<div class="scroll" style="padding:0 20px 30px"><div class="card" style="overflow:hidden">${ADVISORS.map(a=>`<button class="item" onclick="refSave();tmp.ref.advisor='${a.id}';closeSheet();render()"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">${a.l.join(', ')}</span></span>${tmp.ref.advisor===a.id?`<span style="color:var(--accent)">${I.check}</span>`:''}</button>`).join('')}</div></div>`,'tall');
+}
+function advance(id){
+  const d=S.deals.find(x=>x.id===id),now=Date.now();
+  if(d.stage<6){d.stage++;d.updates.push({at:now,t:`Moved to ${STAGES[d.stage].t}.`});if(d.stage>=3)d.docs=6;toast('Moved to '+STAGES[d.stage].t)}
+  else{d.stage=7;d.status='payout';d.disbursedAt=now;d.updates.push({at:now,t:'Loan disbursed and keys handed over. Your payout is scheduled.'});toast('Disbursed. Payout on '+date(payoutAt(d)))}
+  save();go('deal',{id,keepScroll:true});
+}
+function addDoc(id){const d=S.deals.find(x=>x.id===id);if(d.docs<6)d.docs++;d.updates.push({at:Date.now(),t:`${d.first} uploaded ${DOCS[d.docs-1]}.`});save();render();toast(DOCS[d.docs-1]+' received')}
+function markPaid(id){const d=S.deals.find(x=>x.id===id);d.status='paid';d.paidAt=Date.now();d.updates.push({at:Date.now(),t:`Commission of ${aed(comm(d))} paid to your account.`});save();render();toast(aed(comm(d))+' paid')}
+function setStatus(id,s){const d=S.deals.find(x=>x.id===id);d.status=s;d.updates.push({at:Date.now(),t:s==='lost'?'Deal marked as not proceeding.':'Deal reopened.'});save();render()}
+function removeDeal(id){confirmSheet('Delete this deal?','It is removed from this prototype only.','Delete',()=>{S.deals=S.deals.filter(x=>x.id!==id);save();closeSheet();go('deals')})}
+function confirmSheet(t,d,cta,fn){window.__cf=fn;sheet(sheetHead(t)+`<div style="padding:0 20px 34px" class="stack g10"><p class="body muted" style="margin:0 0 8px">${d}</p><button class="btn btn-ink" onclick="__cf()">${cta}</button><button class="btn btn-line" onclick="closeSheet()">Cancel</button></div>`)}
+function updatesSheet(){
+  const all=S.deals.flatMap(d=>d.updates.map(u=>({...u,d}))).sort((a,b)=>b.at-a.at).slice(0,20);
+  const seen=S.seen;S.seen=Date.now();save();
+  sheet(sheetHead('Updates')+`<div class="scroll" style="padding:0 20px 30px"><div class="card" style="overflow:hidden">${all.length?all.map(u=>`<button class="item" style="align-items:flex-start" onclick="closeSheet();setTimeout(()=>go('deal',{id:'${u.d.id}'}),200)"><span style="width:8px;height:8px;border-radius:50%;background:${u.at>seen?'var(--accent)':'var(--line)'};margin-top:7px;flex:none"></span><span class="grow"><span style="display:block;font-weight:600;font-size:14px">${name(u.d)}</span><span class="small">${esc(u.t)}</span><span class="small muted" style="display:block">${ago(u.at)}</span></span></button>`).join(''):'<div class="pad muted">No updates yet.</div>'}</div></div>`,'tall');
+  render();
+}
+function agreementSheet(){
+  sheet(sheetHead('Referral agreement')+`<div class="scroll" style="padding:0 20px 30px"><div class="card pad stack g12 body">
+  <p style="margin:0"><b>1. Commission.</b> Lenty pays the partner 0.3% of the loan amount for every referred client whose mortgage is disbursed.</p>
+  <p style="margin:0"><b>2. Payment.</b> Commission is paid to the partner's bank account within 45 days of disbursal.</p>
+  <p style="margin:0"><b>3. Lead protection.</b> A client is attributed to the partner for 90 days from the referral date.</p>
+  <p style="margin:0"><b>4. Client cost.</b> Mortgage advice and legal support from Lenty are free for the client.</p>
+  <p style="margin:0"><b>5. Consent.</b> The partner confirms the client agreed to be contacted by Lenty.</p>
+  <p class="small muted" style="margin:0">Summary for the prototype. The signed Lenty referral agreement prevails.</p></div></div>`,'tall');
+}
+function ibanSheet(){
+  sheet(sheetHead('Payout account')+`<div style="padding:0 20px" class="stack g12"><div><div class="f-label">Account holder</div><div class="field"><input id="ib_name" value="${esc(S.user.first+' '+S.user.last)}"></div></div><div><div class="f-label">IBAN</div><div class="field"><input id="ib_iban" placeholder="AE07 0331 2345 6789 0123 456" value="${esc(S.user.iban||'')}"></div><div class="hint">UAE IBANs start with AE and have 23 characters.</div></div></div>
+  <div class="sheet-foot"><button class="btn btn-ink" onclick="saveIban()">Save</button></div>`);
+}
+function saveIban(){const v=$('#ib_iban').value.replace(/\s/g,'').toUpperCase();if(!/^AE\d{21}$/.test(v)){toast('Check the IBAN: AE followed by 21 digits');return}S.user.iban=v;S.saved=S.user;save();closeSheet();render();toast('Payout account saved')}
+function editProfileSheet(){
+  const u=S.user;sheet(sheetHead('Edit profile')+`<div class="scroll" style="padding:0 20px" ><div class="stack g12">${[['e_first','First name',u.first],['e_last','Last name',u.last],['e_agency','Agency',u.agency],['e_brn','Broker card number (BRN)',u.brn]].map(([id,l,v])=>`<div><div class="f-label">${l}</div><div class="field"><input id="${id}" value="${esc(v||'')}"></div></div>`).join('')}</div></div>
+  <div class="sheet-foot"><button class="btn btn-ink" onclick="S.user.first=$('#e_first').value.trim()||S.user.first;S.user.last=$('#e_last').value.trim();S.user.agency=$('#e_agency').value.trim();S.user.brn=$('#e_brn').value.trim();S.saved=S.user;save();closeSheet();render();toast('Profile saved')">Save</button></div>`,'tall');
+}
+function contactSheet(){
+  sheet(sheetHead('Partner team')+`<div style="padding:0 20px 34px" class="stack g10"><p class="body muted" style="margin:0 0 6px">Sunday to Friday, 9:00–19:00. Average reply in 5 minutes.</p>
+  <button class="btn btn-ink" onclick="closeSheet();toast('Opening WhatsApp')">${I.wa} WhatsApp</button>
+  <div class="card pad row"><span class="grow num" style="font-weight:600">partners@lenty.com</span><button class="link" onclick="copy('partners@lenty.com','Email copied')">Copy</button></div></div>`);
+}
+
+render();
+</script>
+</body>
+</html>
