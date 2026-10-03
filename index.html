@@ -296,6 +296,8 @@ const I={
 const RATE=0.003, PAYOUT_DAYS=45, DAY=864e5;
 let PROMO=true;
 /* Settings (the spec's configuration table): amounts and limits live here, separate from texts */
+const PROGRAMME_END=Date.UTC(2026,10,30,20,0,0); /* 1 Dec 2026 00:00 Dubai time */
+const TERMS_VERSION='2026-10-lead-bonus', TERMS_VERSION_CORE='2026-10-core', CONSENT_TEXT_VERSION='consent-2026-10';
 const SETTINGS={bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,qualification_days:14,cancel_window_days:30,lead_bonus_ends:'30 Nov 2026',lead_bonus_ends_long:'30 November 2026'};
 const BONUS=SETTINGS.bonus_amount_aed, STARTER=SETTINGS.starter_bonus_amount_aed, STARTER_N=SETTINGS.starter_bonus_count, LIMIT=SETTINGS.monthly_limit, QDAYS=SETTINGS.qualification_days;
 /* Interface texts for the lead bonus feature (translation keys from the spec).
@@ -325,6 +327,8 @@ const TXT={
   "promo.lead_bonus.line.accrued":"Accrued {date} · paid with your weekly payout",
   "promo.lead_bonus.line.on_hold":"We're checking this lead. The bonus is accrued once the check is done.",
   "promo.lead_bonus.line.cancelled":"Cancelled",
+  "promo.lead_bonus.line.limit":"Monthly limit reached. This lead won't earn a bonus.",
+  "promo.lead_bonus.line.not_eligible":"Referred while the bonus programme was off. No lead bonus.",
   "promo.lead_bonus.line.pending":"Accrued when qualification is done · {n} days left",
   "promo.lead_bonus.attention_suffix":"{bonusAed} bonus when done.",
   "promo.lead_bonus.summary_not_this_month":"Not this month",
@@ -381,7 +385,7 @@ const TXT={
 };
 function tx(k,v){const s=TXT[k];if(s==null)return k;const d={bonus:BONUS,starter:STARTER,starterN:STARTER_N,limit:LIMIT,days:QDAYS,ends:SETTINGS.lead_bonus_ends,endsLong:SETTINGS.lead_bonus_ends_long,cancelDays:SETTINGS.cancel_window_days,...v};return s.replace(/\{(\w+)\}/g,(m,n)=>n in d?d[n]:m)}
 const QITEMS=['Consent','Assessment','Documents','Consultant call'];
-const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days'};
+const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days',expired:'No decision within 14 days'};
 const COUNTRIES=[
   {f:'🇦🇪',c:'+971',n:'United Arab Emirates'},{f:'🇬🇧',c:'+44',n:'United Kingdom'},{f:'🇮🇳',c:'+91',n:'India'},
   {f:'🇸🇦',c:'+966',n:'Saudi Arabia'},{f:'🇺🇦',c:'+380',n:'Ukraine'},{f:'🇷🇺',c:'+7',n:'Russia'},
@@ -483,11 +487,14 @@ function jbar(d){
 function statusPill(d){
   if(d.status==='payout')return `<span class="pill warn">${I.clock} Payout in ${daysLeft(d)} days</span>`;
   if(d.status==='paid')return `<span class="pill good">${I.check} Paid ${date(d.paidAt)}</span>`;
+  if(d.status==='expired')return `<span class="pill bad">Expired · not qualified in 14 days</span>`;
   if(d.status==='lost')return d.q&&d.q.reason?`<span class="pill bad">Not qualified · ${REASONS[d.q.reason]}</span>`:`<span class="pill bad">Not proceeding</span>`;
   if(d.stage===0&&d.q&&!d.q.done){if(!d.q.consent)return `<span class="pill warn">${I.clock} Waiting for client consent</span>`;return `<span class="pill">1/8 · Qualification · ${qDone(d)} of 4</span>`}
   if(d.status==='paused')return `<span class="pill grey">On hold</span>`;
   const s=STAGES[d.stage];return `<span class="pill">${d.stage+1}/8 · ${s.t}</span>`;
 }
+/* Daily job from the spec, run on open and every minute in the prototype: leads not qualified by the deadline become "expired" */
+function expireLeads(){let n=0;const now=Date.now();(S.deals||[]).forEach(d=>{if(d.status==='active'&&d.stage===0&&d.q&&!d.q.done&&!d.q.reason&&d.q.deadline&&now>d.q.deadline){d.status='expired';d.q.reason='expired';d.q.expiredAt=now;d.updates.push({at:now,t:'Not qualified within 14 days. The lead expired.'});n++}});if(n)save();return n}
 function qDone(d){const q=d.q||{};return [q.consent,q.assess==='yes'||q.assess==='borderline',q.docs,q.call].filter(Boolean).length}
 function qLeft(d){return Math.max(0,Math.ceil((d.q.deadline-Date.now())/DAY))}
 function qList(d){const q=d.q||{};const st=[q.consent,q.assess==='yes'||q.assess==='borderline',q.docs,q.call];
@@ -498,6 +505,7 @@ function bonusLine(d){
   if(d.q&&d.q.reason)return `<div class="brow" data-chg="3"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.not_qualified',{reason:REASONS[d.q.reason]})}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
   if(d.bonus){const b=d.bonus;const lab=tx('promo.lead_bonus.status.'+b.status);const k={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
     return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}${b.starter?tx('promo.lead_bonus.starter_suffix'):''}</b><span class="muted">${tx('promo.lead_bonus.line.'+b.status,{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
+  if(d.bonusSkip)return `<div class="brow"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.'+d.bonusSkip)}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
   if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.pending',{n:qLeft(d)})}</span></span><span class="serif num" style="font-size:20px">${aed(BONUS)}</span></div>`;
   return '';
 }
@@ -644,7 +652,7 @@ today(){
 },
 deals(){
   const f=tmp.dealTab||'active';
-  const groups={active:d=>d.status==='active'||d.status==='paused',payout:d=>d.status==='payout',paid:d=>d.status==='paid',lost:d=>d.status==='lost'};
+  const groups={active:d=>d.status==='active'||d.status==='paused',payout:d=>d.status==='payout',paid:d=>d.status==='paid',lost:d=>d.status==='lost'||d.status==='expired'};
   const labels={active:'In progress',payout:'Awaiting payout',paid:'Paid',lost:'Not proceeding'};
   const list=S.deals.filter(groups[f]).sort((a,b)=>b.createdAt-a.createdAt);
   return `<div class="view"><div class="top"></div>
@@ -1020,7 +1028,7 @@ function refNext(){refSave();tmp.refStep++;go('refer')}
 function refBack(){refSave();tmp.refStep--;go('refer')}
 function submitRefer(){
   refSave();const f=tmp.ref,now=Date.now(),a=adv(f.advisor);
-  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,docs:false,call:false,deadline:now+QDAYS*DAY},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
+  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PROMO&&now<PROGRAMME_END,terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
   S.deals.push(d);save();$('#r_next').textContent='Sending…';setTimeout(()=>go('done',{id:d.id}),600);
 }
 function contactsSheet(){
@@ -1087,7 +1095,15 @@ function contactSheet(){
 const QP=new URLSearchParams(window.__Q||location.search);
 (function boot(){
   const sc=QP.get('screen');
-  if(!sc||!SCREENS[sc]){render();return}
+  if(!sc||!SCREENS[sc]){
+    expireLeads();render();
+    /* the consultant page (consultant.html) writes to the same browser storage: pick up its changes */
+    window.addEventListener('storage',e=>{if(e.key!==KEY)return;try{S=Object.assign(fresh(),JSON.parse(e.newValue||'{}'))}catch(err){return}
+      if(!S.user&&R.screen!=='welcome'&&!['phone','otp','profile','agreement'].includes(R.screen)){go('welcome');return}
+      if(R.screen==='deal'&&!S.deals.find(x=>x.id===R.params.id)){go('deals');return}
+      const sc2=$('#app .scroll'),top=sc2?sc2.scrollTop:0;render();const n=$('#app .scroll');if(n)n.scrollTop=top});
+    setInterval(()=>{if(expireLeads())render()},60000);
+    return}
   save=()=>{};
   S=fresh();
   S.user={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235',cc:'+971',phone:'50 123 4567',since:Date.now()-90*DAY,iban:''};

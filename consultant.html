@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lenty Team · Qualification</title>
+<link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#002c1f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
+<style>
+/* Layout: desktop work tool for Lenty consultants — queue table on the left, lead card on the right, Lenty green/cream */
+:root{
+  color-scheme:light;
+  --ground:#f4f2ea; --card:#fffdf8; --ink:#002c1f; --ink-2:#1e4034; --muted:#6a7069; --line:#e3dfd2; --line-2:#efece3;
+  --accent:#2e6a50; --accent-ink:#1e4d3a; --accent-soft:#e4ede6; --cream:#eee2c9; --sand:#b79d84;
+  --good:#1d7a4a; --good-soft:#e1f2e6; --warn:#9c5a00; --warn-soft:#fbf0d6; --bad:#b8382d; --bad-soft:#fbe9e6;
+  --display:"Prata",Georgia,"Times New Roman",serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+input,select,textarea{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.serif{font-family:var(--display);font-weight:400}
+
+/* Top bar */
+.top{background:var(--ink);color:var(--cream);position:sticky;top:0;z-index:20}
+.top .in{max-width:1440px;margin:0 auto;padding:0 20px;height:62px;display:flex;align-items:center;gap:22px}
+.brand{display:flex;align-items:baseline;gap:8px;color:var(--cream)}
+.brand .lbl{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(238,226,201,.7)}
+.tabs{display:flex;gap:4px;height:100%}
+.tab{height:100%;padding:0 14px;display:flex;align-items:center;gap:8px;font-weight:600;color:rgba(238,226,201,.65);border-bottom:2px solid transparent}
+.tab.on{color:var(--cream);border-bottom-color:var(--cream)}
+.tab[disabled]{cursor:default}
+.soon{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(238,226,201,.14);padding:2px 7px;border-radius:999px}
+.who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(238,226,201,.75)}
+.who select{background:rgba(238,226,201,.1);border:1px solid rgba(238,226,201,.25);color:var(--cream);border-radius:10px;height:36px;padding:0 10px}
+.who select option{color:var(--ink)}
+.who a{color:var(--cream);font-weight:600;text-decoration:none;border:1px solid rgba(238,226,201,.3);border-radius:10px;height:36px;display:inline-flex;align-items:center;padding:0 12px}
+
+/* Page */
+.page{max-width:1440px;margin:0 auto;padding:22px 20px 60px;display:flex;flex-direction:column;gap:16px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:400;font-size:30px;margin:0;line-height:1.1}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(400px,.8fr);gap:18px;align-items:start}
+@media (max-width:1050px){.layout{grid-template-columns:minmax(0,1fr)}.lead{position:static;max-height:none}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px}
+.note{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);color:var(--accent-ink);border-radius:14px;padding:12px 14px;font-size:13px}
+.note a{color:inherit;font-weight:600}
+
+/* Filters */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:13px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.chip .n{font-size:12px;opacity:.75}
+
+/* Queue table */
+.qtable{overflow-x:auto}
+.qrow{display:grid;grid-template-columns:minmax(170px,1.5fr) minmax(130px,1fr) 118px 120px 110px;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--line-2);width:100%;text-align:left;min-width:700px}
+.qrow.h{border-top:0;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:14px;padding-bottom:10px}
+button.qrow:hover{background:var(--line-2)}
+button.qrow.sel{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.cname{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dots{display:flex;gap:4px}
+.dots i{width:22px;height:8px;border-radius:4px;background:var(--line)}
+.dots i.ok{background:var(--good)}
+.dots i.no{background:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--accent-soft);color:var(--accent-ink)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.grey{background:var(--line-2);color:var(--muted)}
+.tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--line-2);color:var(--muted)}
+.tag.risk{background:var(--bad-soft);color:var(--bad)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+
+/* Lead card */
+.lead{position:sticky;top:80px;max-height:calc(100vh - 100px);overflow:auto}
+.lead .sec{padding:16px 18px;border-top:1px solid var(--line-2);display:flex;flex-direction:column;gap:10px}
+.lead .sec:first-child{border-top:0}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sec-h b{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px}
+.stepn{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:12px;font-weight:700;background:var(--line);color:var(--ink)}
+.stepn.ok{background:var(--good);color:#fff}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{font-weight:600;text-align:right}
+.btn{height:40px;padding:0 14px;border-radius:12px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-ink{background:var(--ink);color:var(--cream)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-line{background:var(--card);border:1px solid var(--line)}
+.btn-bad{background:var(--card);border:1px solid #e9c3be;color:var(--bad)}
+.btn[disabled]{background:var(--line-2);color:#a8a392;border-color:transparent;cursor:not-allowed}
+.btn-wide{width:100%;height:46px;font-size:14.5px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.f input,.f select{width:100%;height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px}
+textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px 10px;resize:vertical}
+.chk{display:flex;gap:10px;align-items:center;font-size:13.5px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.verdict{border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.verdict.good{background:var(--good-soft)}.verdict.warn{background:var(--warn-soft)}.verdict.bad{background:var(--bad-soft)}
+.verdict .v{font-family:var(--display);font-size:20px}
+.verdict.good .v{color:var(--good)}.verdict.warn .v{color:var(--warn)}.verdict.bad .v{color:var(--bad)}
+.outcome{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
+.missing{font-size:12.5px;color:var(--muted)}
+.tpl{background:var(--line-2);border-radius:10px;padding:10px 12px;font-size:13px}
+.log{display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.log div{display:flex;gap:8px}
+.log time{color:var(--muted);flex:none;min-width:86px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:12px 16px;border-radius:14px;font-weight:500;z-index:50;box-shadow:0 10px 30px rgba(0,44,31,.3);max-width:min(560px,calc(100vw - 32px))}
+.demo{font-size:12.5px;color:var(--muted)}
+.demo summary{cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <div class="brand"><svg height="24" viewBox="141 350 753 308" fill="currentColor" role="img" aria-label="Lenty"><use href="#lenty"/></svg><span class="lbl">Team</span></div>
+  <nav class="tabs"><button class="tab on">Qualification</button><button class="tab" disabled title="Admin tab is the next step (B3)">Admin <span class="soon">Soon</span></button></nav>
+  <div class="who"><label for="me">Signed in as</label><select id="me"></select><a href="./" target="_blank" rel="noopener">Agent app ↗</a></div>
+</div></header>
+<main class="page" id="page"></main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="lenty"></g></defs></svg>
+
+<script>
+/* ===================== Settings (same values as the agent app; in production: configuration table, edited in the Admin tab) ===================== */
+const SETTINGS={bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,qualification_days:14,cancel_window_days:30,decision_working_days:2,starter_bonus_enabled:true};
+const PROGRAMME_END=Date.UTC(2026,10,30,20,0,0); /* 1 Dec 2026 00:00 Dubai */
+const CONSENT_TEXT_VERSION='consent-2026-10';
+const DAY=864e5;
+const AGENT_KEY='lenty-partners-v1.02';   /* agent app storage (same browser) */
+const TEAM_KEY='lenty-team-v1.02';        /* demo leads of other agents */
+
+/* ===================== Texts (translation keys, English like the whole app) ===================== */
+const TXT={
+  "team.title":"Qualification queue",
+  "team.sub":"Leads have {days} days from submission to qualify. Decide within {wd} working days once consent, assessment and documents are in.",
+  "team.filter.decide":"Needs decision","team.filter.consent":"Waiting for consent","team.filter.progress":"In progress","team.filter.closed":"Closed","team.filter.all":"All",
+  "team.col.client":"Client","team.col.agent":"Agent","team.col.checklist":"Checklist","team.col.deadline":"14-day deadline","team.col.decide":"Decide by",
+  "team.check":"Consent · Assessment · Documents · Consultant call",
+  "team.empty":"No leads here.",
+  "team.no_agent_data":"No leads from the agent app in this browser yet. Open the <a href=\"./\" target=\"_blank\" rel=\"noopener\">agent app</a>, sign up and refer a client: the lead appears here straight away. Demo leads from other agents are shown meanwhile.",
+  "team.select":"Select a lead to see the details.",
+  "team.source.link":"Via agent link","team.source.form":"Agent form",
+  "team.days_left":"{n} days left","team.day_left":"1 day left","team.due_today":"Due today","team.expired":"Expired","team.qualified_on":"Qualified {date}","team.rejected_on":"Rejected {date}",
+  "team.sec.agent":"Agent","team.sec.consent":"Consent","team.sec.assessment":"Assessment","team.sec.documents":"Documents","team.sec.decision":"Call & decision","team.sec.log":"Activity",
+  "team.agent.new":"New agent · starter bonus {used} of {n} used","team.agent.regular":"Regular bonus","team.agent.month":"Paid leads this month","team.agent.suspended":"Bonuses suspended: {pct}% of decisions this month were rejections. New bonuses go on review.",
+  "team.consent.none":"Not confirmed yet. The client got a link right after the referral.",
+  "team.consent.link":"Confirmed via link","team.consent.whatsapp":"Replied YES on WhatsApp","team.consent.form":"Given in the agent's link form",
+  "team.consent.agent_attested":"Agent confirmed the client agreed · {date}",
+  "team.consent.copy":"Copy consent link","team.consent.wa":"Consent received on WhatsApp",
+  "team.consent.template_h":"First message if consent is missing",
+  "team.consent.template":"Hi {client}, this is {advisor} from Lenty. {agent} referred you for mortgage advice. Reply YES to confirm we can help you.",
+  "team.assess.income":"Monthly income, AED","team.assess.debts":"Monthly debts, AED","team.assess.residency":"Residency","team.assess.price":"Property price, AED","team.assess.down":"Down payment, %",
+  "team.assess.save":"Save assessment","team.assess.by_agent":"Entered by the agent","team.assess.by_you":"Corrected by the consultant",
+  "team.assess.yes":"Yes","team.assess.borderline":"Borderline","team.assess.no":"No","team.assess.none":"No assessment yet",
+  "team.assess.dbr":"DBR {dbr}% of 50%","team.assess.min_down":"Down payment below the {min}% minimum for {res}",
+  "team.docs.passport":"Passport","team.docs.eid":"Emirates ID (or visa for a non-resident)","team.docs.income":"Salary certificate or proof of income",
+  "team.docs.mark":"Documents received","team.docs.done":"Documents received {date}",
+  "team.notes":"Notes from the call","team.notes_ph":"Intent to buy, timeline, anything the bank should know",
+  "team.confirm":"Confirm qualification","team.reject":"Reject","team.reject_reason":"Reason","team.reject_pick":"Choose a reason","team.reject_go":"Reject lead","team.cancel":"Cancel",
+  "team.missing":"To confirm: {items}","team.missing.consent":"client consent","team.missing.assess":"assessment Yes or Borderline","team.missing.docs":"documents",
+  "team.outcome.h":"On confirm",
+  "team.outcome.accrued":"{amount} {kind} bonus for {agent} · Accrued","team.outcome.on_hold":"{amount} {kind} bonus for {agent} · On review ({why})",
+  "team.outcome.limit":"No bonus: {agent} reached {limit} paid leads this month","team.outcome.not_eligible":"No bonus: referred while the bonus programme was off",
+  "team.kind.starter":"starter","team.kind.regular":"lead",
+  "team.why.risk":"risk flag","team.why.suspended":"agent bonuses suspended",
+  "team.result.qualified":"Qualified {date} by {by}","team.result.rejected":"Rejected {date}: {reason}","team.result.expired":"Expired {date}: no decision within 14 days",
+  "team.decide_by":"Decide by {date}","team.decide_late":"Overdue since {date}",
+  "team.risk.same_device":"Same device as the agent","team.risk.phone_other_agent":"Phone matches another agent's contact","team.risk.over_5_day":"Agent sent more than 5 leads in a day",
+  "team.toast.qualified":"{client} qualified. {bonus}","team.toast.rejected":"{client} rejected: {reason}","team.toast.consent":"Consent recorded for {client}","team.toast.docs":"Documents recorded for {client}","team.toast.assess":"Assessment saved: {res}","team.toast.copied":"Consent link copied","team.toast.copy_fail":"Copy is not available here. Select the link and copy it.",
+  "team.demo":"Prototype controls","team.demo.link":"Simulate: client confirmed via link","team.demo.reset":"Reset demo leads of other agents",
+  "agent.msg.consent_wa":"{client} replied YES on WhatsApp. Consent confirmed.",
+  "agent.msg.consent_link":"{client} confirmed consent via the link.",
+  "agent.msg.docs":"Your advisor received {client}'s documents.",
+  "agent.msg.assess":"Your advisor updated the assessment: {res}.",
+  "agent.msg.qualified.accrued":"Qualified. {amount} {kind} bonus accrued, paid with your next weekly payout.",
+  "agent.msg.qualified.on_hold":"Qualified. Your {amount} lead bonus is on review before it is accrued.",
+  "agent.msg.qualified.limit":"Qualified. Monthly limit reached, so this lead doesn't earn a bonus.",
+  "agent.msg.qualified.not_eligible":"Qualified. Referred while the bonus programme was off, so no lead bonus.",
+  "agent.msg.qualified.plain":"Qualified. Lenty is now matching banks for {client}.",
+  "agent.msg.rejected":"Not qualified: {reason}. You keep the lead protection for 90 days.",
+  "agent.msg.expired":"Not qualified within 14 days. The lead expired.",
+};
+function tx(k,v={}){const s=TXT[k];if(s==null)return k;return s.replace(/\{(\w+)\}/g,(m,n)=>n in v?v[n]:m)}
+
+/* ===================== Reference data ===================== */
+const ADVISORS=[{id:'a1',n:'Elena Petrenko'},{id:'a2',n:'Amira Haddad'},{id:'a3',n:'Farhan Qureshi'},{id:'a4',n:'Daniel Okafor'},{id:'a5',n:'Sofia Lindqvist'},{id:'a6',n:'Omar Saleh'}];
+const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days',expired:'No decision within 14 days'};
+const CONSULTANT_REASONS=['duplicate','assessment_no','no_response','no_documents']; /* "fraud" is admin-only */
+const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resident'};
+const MIN_DOWN={national:15,resident:20,nonresident:40};
+
+/* ===================== Helpers ===================== */
+const $=(s)=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Math.round(+n||0).toLocaleString('en-US');
+const aed=n=>'AED '+fmt(n);
+const num=v=>+String(v??'').replace(/[^\d.]/g,'')||0;
+const date=t=>new Date(t).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const dt=t=>new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const adv=id=>(ADVISORS.find(a=>a.id===id)||{n:'Lenty advisor'}).n;
+const sameMonth=t=>{if(!t)return false;const a=new Date(t),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()};
+function addWorkingDays(t,n){const d=new Date(t);let k=0;while(k<n){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)k++}return d.getTime()}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+/* Same formula as the agent app's assessment, plus the minimum down payment for the residency status */
+function assess(i){if(!i||!i.income)return null;const loan=i.price*(1-i.down/100),r=4.25/1200,n=300,pay=loan*r/(1-Math.pow(1+r,-n));const dbr=(i.debts+pay)/i.income*100;
+  let k=dbr<=42?'yes':dbr<=50?'borderline':'no';const min=MIN_DOWN[i.residency]||20;const lowDown=i.down<min;if(lowDown)k='no';return {dbr,k,lowDown,min,res:RES[i.residency]||''}}
+
+/* ===================== Demo data: other agents and their leads ===================== */
+const DEMO_AGENTS={
+  g1:{name:'Sara Ali',agency:'Bayut Homes',base:{qualifiedTotal:5,starterUsed:3,monthBonuses:4,monthQualified:4,monthRejected:1}},
+  g2:{name:'Rami Khoury',agency:'Skyline Realty',base:{qualifiedTotal:6,starterUsed:3,monthBonuses:2,monthQualified:2,monthRejected:3}},
+  g3:{name:'Lina Park',agency:'Coastline Properties',base:{qualifiedTotal:1,starterUsed:1,monthBonuses:1,monthQualified:1,monthRejected:0}},
+  g4:{name:'Hassan Ali',agency:'Metro Estates',base:{qualifiedTotal:24,starterUsed:3,monthBonuses:10,monthQualified:10,monthRejected:1}},
+};
+function demoLeads(){
+  const now=Date.now(),h=36e5;
+  const L=(o)=>Object.assign({cc:'+971',source:'agent_form',riskFlags:[],bonusEligible:true,status:'active',stage:0,log:[]},o);
+  const q=(o,created)=>Object.assign({consent:false,docs:false,call:false,attestedAt:created,deadline:created+SETTINGS.qualification_days*DAY},o);
+  const mk=(o)=>{const c=now-o.ago;const a=assess(o.input)||{};return L(Object.assign(o,{createdAt:c,q:q(Object.assign({assess:a.k,dbr:a.dbr,input:o.input},o.q||{}),c)}))};
+  return [
+    mk({id:'t1',agent:'g1',first:'Fatima',last:'Al Zaabi',phone:'50 441 2087',advisor:'a6',ago:2*DAY,input:{income:42000,debts:3000,residency:'resident',price:2200000,down:20}}),
+    mk({id:'t2',agent:'g1',first:'Tom',last:'Becker',cc:'+49',phone:'151 2345 6781',advisor:'a5',ago:3*DAY,input:{income:30000,debts:2500,residency:'resident',price:2300000,down:20},q:{consent:true,method:'link',consentAt:now-2.6*DAY}}),
+    mk({id:'t3',agent:'g1',first:'Viktor',last:'Hale',phone:'55 302 9917',advisor:'a4',ago:4*DAY,source:'agent_link',riskFlags:['same_device'],input:{income:55000,debts:1500,residency:'resident',price:2600000,down:25},q:{consent:true,method:'form',consentAt:now-4*DAY,docs:true,docsAt:now-1*DAY}}),
+    mk({id:'t4',agent:'g2',first:'Aisha',last:'Rahman',phone:'52 118 6620',advisor:'a2',ago:5*DAY,input:{income:38000,debts:2000,residency:'national',price:1900000,down:15},q:{consent:true,method:'whatsapp',consentAt:now-4.5*DAY,docs:true,docsAt:now-3*h}}),
+    mk({id:'t5',agent:'g3',first:'Noor',last:'Hassan',phone:'56 774 3021',advisor:'a1',ago:6*DAY,input:{income:36000,debts:1800,residency:'resident',price:1750000,down:20},q:{consent:true,method:'link',consentAt:now-5.8*DAY,docs:true,docsAt:now-2*DAY}}),
+    mk({id:'t6',agent:'g4',first:'Grace',last:'Liu',cc:'+65',phone:'8123 4567',advisor:'a3',ago:7*DAY,input:{income:31000,debts:3200,residency:'nonresident',price:1600000,down:40},q:{consent:true,method:'link',consentAt:now-6.5*DAY,docs:true,docsAt:now-1*DAY}}),
+    mk({id:'t7',agent:'g1',first:'Leo',last:'Martin',cc:'+33',phone:'6 12 34 56 78',advisor:'a5',ago:1*DAY,bonusEligible:false,input:{income:40000,debts:2000,residency:'resident',price:2000000,down:20},q:{consent:true,method:'link',consentAt:now-20*h}}),
+    mk({id:'t8',agent:'g1',first:'Sam',last:'Patel',cc:'+91',phone:'98111 22334',advisor:'a3',ago:15*DAY,input:{income:28000,debts:4000,residency:'resident',price:1500000,down:20}}),
+    Object.assign(mk({id:'t9',agent:'g3',first:'Julia',last:'Novak',phone:'58 990 1143',advisor:'a1',ago:9*DAY,input:{income:26000,debts:2600,residency:'resident',price:1400000,down:20},q:{consent:true,method:'link',consentAt:now-8*DAY,reason:'no_response',rejectedAt:now-2*DAY,by:'a1'}}),{status:'lost'}),
+    Object.assign(mk({id:'t10',agent:'g2',first:'Kenji',last:'Sato',cc:'+81',phone:'90 1234 5678',advisor:'a2',ago:10*DAY,input:{income:48000,debts:2200,residency:'resident',price:2500000,down:20},q:{consent:true,method:'link',consentAt:now-9*DAY,docs:true,docsAt:now-6*DAY,call:true,done:true,at:now-5*DAY,by:'a2'}}),{stage:1,bonus:{amt:100,starter:false,status:'on_hold',at:now-5*DAY}}),
+  ];
+}
+function team(){let t=load(TEAM_KEY);if(!t||!t.leads){t={leads:demoLeads()};store(TEAM_KEY,t)}return t}
+
+/* ===================== Unified view over both stores ===================== */
+function agentStore(){return load(AGENT_KEY)}
+function myAgent(){const s=agentStore();const u=s&&s.user;return u?{name:(u.first+' '+(u.last||'')).trim(),agency:u.agency||''}:null}
+function allLeads(){
+  const out=[];const s=agentStore();
+  if(s&&s.user&&Array.isArray(s.deals))s.deals.filter(d=>d.q).forEach(d=>out.push(Object.assign({},d,{src:'agent',agent:'me',source:d.source||(d.viaLink?'agent_link':'agent_form'),riskFlags:d.riskFlags||[]})));
+  team().leads.forEach(l=>out.push(Object.assign({},l,{src:'team'})));
+  return out;
+}
+function agentInfo(id){if(id==='me'){const m=myAgent()||{name:'You (agent app)',agency:''};return {name:m.name,agency:m.agency,base:{qualifiedTotal:0,starterUsed:0,monthBonuses:0,monthQualified:0,monthRejected:0}}}return DEMO_AGENTS[id]}
+/* Agent statistics: base numbers (demo history) + leads in this prototype */
+function agentStats(id,exceptId){
+  const a=agentInfo(id),b=a.base;const ls=allLeads().filter(l=>l.agent===id&&l.id!==exceptId);
+  const st={qualifiedTotal:b.qualifiedTotal+ls.filter(l=>l.q&&l.q.done).length,
+    starterUsed:b.starterUsed+ls.filter(l=>l.bonus&&l.bonus.starter&&l.bonus.status!=='cancelled').length,
+    monthBonuses:b.monthBonuses+ls.filter(l=>l.bonus&&l.bonus.status!=='cancelled'&&sameMonth(l.bonus.at)).length,
+    monthQualified:b.monthQualified+ls.filter(l=>l.q&&l.q.done&&sameMonth(l.q.at)).length,
+    monthRejected:b.monthRejected+ls.filter(l=>l.q&&l.q.rejectedAt&&sameMonth(l.q.rejectedAt)).length};
+  const dec=st.monthQualified+st.monthRejected;st.rejectPct=dec?Math.round(st.monthRejected/dec*100):0;st.suspended=dec>0&&st.monthRejected/dec>0.5;
+  st.isNew=SETTINGS.starter_bonus_enabled&&st.starterUsed<SETTINGS.starter_bonus_count&&st.qualifiedTotal<SETTINGS.starter_bonus_count;
+  return st;
+}
+/* Bonus decision at "Confirm qualification" (spec: rules of payout, promo layer, anti-fraud) */
+function decideBonus(l){
+  const eligible=l.bonusEligible!==false&&l.createdAt<PROGRAMME_END;
+  if(!eligible)return {skip:'not_eligible'};
+  const st=agentStats(l.agent,l.id);
+  if(st.monthBonuses>=SETTINGS.monthly_limit)return {skip:'limit'};
+  const starter=st.isNew;
+  const terms=l.terms||{};
+  const amt=starter?(terms.starter||SETTINGS.starter_bonus_amount_aed):(terms.bonus||SETTINGS.bonus_amount_aed);
+  const why=(l.riskFlags||[]).length?'risk':st.suspended?'suspended':null;
+  return {bonus:{amt,starter,status:why?'on_hold':'accrued',at:Date.now(),why}};
+}
+function state(l){
+  if(l.status==='expired')return 'expired';
+  if(l.status==='lost'||(l.q&&l.q.reason))return 'rejected';
+  if(l.q&&l.q.done)return 'qualified';
+  if(!l.q.consent)return 'consent_pending';
+  return 'in_qualification';
+}
+function ready(l){const q=l.q;return q.consent&&(q.assess==='yes'||q.assess==='borderline')&&q.docs}
+function decideBy(l){const q=l.q;if(!ready(l))return null;return addWorkingDays(Math.max(q.consentAt||0,q.docsAt||0,q.assessAt||0,l.createdAt),SETTINGS.decision_working_days)}
+
+/* Writes go back to the store the lead came from; the agent app sees its own leads change */
+function mutate(src,id,fn,agentMsg){
+  const now=Date.now();
+  if(src==='agent'){const s=agentStore();const d=s&&s.deals.find(x=>x.id===id);if(!d)return;fn(d);if(agentMsg){d.updates=d.updates||[];d.updates.push({at:now,t:agentMsg})}store(AGENT_KEY,s)}
+  else{const t=team();const l=t.leads.find(x=>x.id===id);if(!l)return;fn(l);if(agentMsg){l.log=l.log||[];l.log.push({at:now,t:agentMsg})}store(TEAM_KEY,t)}
+}
+/* Daily job from the spec: leads without a decision by the deadline become expired (runs on open and every minute here) */
+function expireAll(){
+  const now=Date.now();let n=0;
+  allLeads().forEach(l=>{if(l.status==='active'&&l.stage===0&&l.q&&!l.q.done&&!l.q.reason&&l.q.deadline&&now>l.q.deadline){
+    mutate(l.src,l.id,d=>{d.status='expired';d.q.reason='expired';d.q.expiredAt=now},tx('agent.msg.expired'));n++}});
+  return n;
+}
+
+/* ===================== UI state ===================== */
+const ui={filter:'decide',sel:null,me:'a6',reject:false,reason:'',docs:{}};
+try{ui.me=localStorage.getItem('lenty-team-me')||'a6'}catch(e){}
+
+function counts(ls){const c={decide:0,consent:0,progress:0,closed:0,all:ls.length};ls.forEach(l=>{c[bucket(l)]++});return c}
+function bucket(l){const s=state(l);if(s==='qualified'||s==='rejected'||s==='expired')return 'closed';if(s==='consent_pending')return 'consent';return ready(l)?'decide':'progress'}
+function dots(l){const q=l.q||{};const a=q.assess;return `<span class="dots" title="${tx('team.check')}"><i class="${q.consent?'ok':''}"></i><i class="${a==='yes'||a==='borderline'?'ok':a==='no'?'no':''}"></i><i class="${q.docs?'ok':''}"></i><i class="${q.call||q.done?'ok':''}"></i></span>`}
+function deadlineCell(l){
+  const s=state(l),q=l.q;
+  if(s==='qualified')return `<span class="pill good">${tx('team.qualified_on',{date:date(q.at)})}</span>`;
+  if(s==='rejected')return `<span class="pill bad">${tx('team.rejected_on',{date:date(q.rejectedAt||l.createdAt)})}</span>`;
+  if(s==='expired')return `<span class="pill bad">${tx('team.expired')}</span>`;
+  const left=Math.ceil((q.deadline-Date.now())/DAY);
+  const txt=left<=0?tx('team.due_today'):left===1?tx('team.day_left'):tx('team.days_left',{n:left});
+  return `<span class="pill ${left<=3?'bad':left<=7?'warn':'grey'} num">${txt}</span>`;
+}
+function decideCell(l){const t=decideBy(l);if(!t||state(l)!=='in_qualification')return '<span class="muted">—</span>';const late=Date.now()>t;return `<span class="${late?'pill bad':'small'}">${late?tx('team.decide_late',{date:date(t)}):date(t)}</span>`}
+
+function render(){
+  const ls=allLeads().sort((a,b)=>{const da=a.q&&a.q.deadline||0,db=b.q&&b.q.deadline||0;return bucket(a)==='closed'?1:bucket(b)==='closed'?-1:da-db});
+  const c=counts(ls);const shown=ls.filter(l=>ui.filter==='all'||bucket(l)===ui.filter);
+  if(ui.sel&&!ls.find(l=>l.id===ui.sel))ui.sel=null;
+  if(!ui.sel&&shown.length)ui.sel=shown[0].id;
+  const sel=ls.find(l=>l.id===ui.sel);
+  const s=agentStore();const noAgent=!(s&&s.user&&(s.deals||[]).some(d=>d.q));
+  const fl=[['decide'],['consent'],['progress'],['closed'],['all']];
+  $('#page').innerHTML=`
+  <div class="head"><div><h1>${tx('team.title')}</h1><p class="muted" style="margin:6px 0 0;max-width:72ch">${tx('team.sub',{days:SETTINGS.qualification_days,wd:SETTINGS.decision_working_days})}</p></div>
+    <div class="chips">${fl.map(([k])=>`<button class="chip ${ui.filter===k?'on':''}" onclick="ui.filter='${k}';ui.sel=null;render()">${tx('team.filter.'+k)} <span class="n num">${c[k]}</span></button>`).join('')}</div></div>
+  ${noAgent?`<div class="note"><span>ⓘ</span><span>${tx('team.no_agent_data')}</span></div>`:''}
+  <div class="layout">
+    <section class="card qtable" aria-label="${tx('team.title')}">
+      <div class="qrow h"><span>${tx('team.col.client')}</span><span>${tx('team.col.agent')}</span><span>${tx('team.col.checklist')}</span><span>${tx('team.col.deadline')}</span><span>${tx('team.col.decide')}</span></div>
+      ${shown.length?shown.map(l=>{const a=agentInfo(l.agent);return `<button class="qrow ${l.id===ui.sel?'sel':''}" onclick="ui.sel='${l.id}';ui.reject=false;render()">
+        <span><span class="cname">${esc(l.first+' '+(l.last||''))}${l.agent==='me'?'<span class="tag">Your agent app</span>':''}${l.source==='agent_link'?`<span class="tag">${tx('team.source.link')}</span>`:''}${(l.riskFlags||[]).length?'<span class="tag risk">Risk</span>':''}</span><span class="small muted num">${esc(l.cc+' '+l.phone)}</span></span>
+        <span><span style="display:block;font-weight:500">${esc(a.name)}</span><span class="small muted">${esc(a.agency)}</span></span>
+        <span>${dots(l)}</span><span>${deadlineCell(l)}</span><span>${decideCell(l)}</span></button>`}).join(''):`<div class="empty">${tx('team.empty')}</div>`}
+    </section>
+    <section class="card lead" aria-label="Lead">${sel?leadCard(sel):`<div class="empty">${tx('team.select')}</div>`}</section>
+  </div>
+  <details class="demo"><summary>${tx('team.demo')}</summary><p><button class="btn btn-line" onclick="resetDemo()">${tx('team.demo.reset')}</button></p></details>`;
+  bindCard(sel);
+}
+
+function leadCard(l){
+  const q=l.q,a=agentInfo(l.agent),st=agentStats(l.agent,l.id),s=state(l),open=s==='consent_pending'||s==='in_qualification';
+  const cl=esc(l.first);
+  const step=(n,ok)=>`<span class="stepn ${ok?'ok':''}">${ok?'✓':n}</span>`;
+  const inp=q.input||{income:0,debts:0,residency:l.residency||'resident',price:l.price||0,down:l.price&&l.loan?Math.round((1-l.loan/l.price)*100):20};
+  const as=assess(inp)||(q.assess?{k:q.assess,dbr:q.dbr||0}:null);
+  const dItems=ui.docs[l.id]||(q.docs?{passport:1,eid:1,income:1}:{});
+  const miss=[!q.consent&&tx('team.missing.consent'),!(q.assess==='yes'||q.assess==='borderline')&&tx('team.missing.assess'),!q.docs&&tx('team.missing.docs')].filter(Boolean);
+  const out=open?decideBonus(l):null;
+  const kind=b=>tx(b.starter?'team.kind.starter':'team.kind.regular');
+  const outcome=!out?'':out.skip?tx('team.outcome.'+out.skip,{agent:esc(a.name),limit:SETTINGS.monthly_limit}):tx('team.outcome.'+out.bonus.status,{amount:aed(out.bonus.amt),kind:kind(out.bonus),agent:esc(a.name),why:out.bonus.why?tx('team.why.'+out.bonus.why):''});
+  const result=s==='qualified'?tx('team.result.qualified',{date:dt(q.at),by:adv(q.by)}):s==='rejected'?tx('team.result.rejected',{date:dt(q.rejectedAt||l.createdAt),reason:REASONS[q.reason]||q.reason}):s==='expired'?tx('team.result.expired',{date:dt(q.expiredAt||q.deadline)}):'';
+  const bonusNow=l.bonus?`${aed(l.bonus.amt)} ${kind(l.bonus)} bonus · ${{on_hold:'On review',accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'}[l.bonus.status]}`:l.bonusSkip?{limit:'No bonus: monthly limit',not_eligible:'No bonus: programme was off'}[l.bonusSkip]:'';
+  const tb=decideBy(l);
+  const log=[...(l.updates||[]),...(l.log||[])].sort((x,y)=>y.at-x.at).slice(0,8);
+  return `
+  <div class="sec">
+    <div class="sec-h"><span><span class="serif" style="font-size:24px;display:block;line-height:1.15">${esc(l.first+' '+(l.last||''))}</span><span class="small muted num">${esc(l.cc+' '+l.phone)} · ${tx(l.source==='agent_link'?'team.source.link':'team.source.form')} · ${dt(l.createdAt)}</span></span>${deadlineCell(l)}</div>
+    ${(l.riskFlags||[]).map(f=>`<div class="note" style="background:var(--bad-soft);color:var(--bad)">⚠ <span>${tx('team.risk.'+f)}. ${open?'The bonus will go on review for the admin.':''}</span></div>`).join('')}
+    ${result?`<div class="verdict ${s==='qualified'?'good':'bad'}"><span><span class="v">${s==='qualified'?'Qualified':s==='rejected'?'Rejected':'Expired'}</span><span class="small" style="display:block;color:var(--ink-2)">${result}</span></span>${bonusNow?`<span class="pill ${l.bonus&&l.bonus.status==='accrued'?'warn':'grey'}">${bonusNow}</span>`:''}</div>`:''}
+    ${open&&tb?`<div class="small ${Date.now()>tb?'pill bad':''}">${Date.now()>tb?tx('team.decide_late',{date:date(tb)}):tx('team.decide_by',{date:date(tb)})}</div>`:''}
+  </div>
+  <div class="sec">
+    <div class="sec-h"><b>${tx('team.sec.agent')}</b><span class="small muted">${esc(a.agency)}</span></div>
+    <div class="kv"><span>${esc(a.name)}</span><span>${st.isNew?tx('team.agent.new',{used:st.starterUsed,n:SETTINGS.starter_bonus_count}):tx('team.agent.regular')}</span></div>
+    <div class="kv"><span>${tx('team.agent.month')}</span><span class="num">${Math.min(st.monthBonuses,SETTINGS.monthly_limit)} of ${SETTINGS.monthly_limit}</span></div>
+    ${st.suspended?`<div class="note" style="background:var(--warn-soft);color:var(--warn)">⚠ <span>${tx('team.agent.suspended',{pct:st.rejectPct})}</span></div>`:''}
+  </div>
+  <div class="sec">
+    <div class="sec-h"><b>${step(1,q.consent)} ${tx('team.sec.consent')}</b>${q.consent?`<span class="pill good">${tx('team.consent.'+(q.method||'link'))}</span>`:''}</div>
+    <div class="small muted">${tx('team.consent.agent_attested',{date:dt(q.attestedAt||l.createdAt)})}</div>
+    ${q.consent?`<div class="small">${dt(q.consentAt||l.createdAt)} · text ${esc(q.consentTextVersion||CONSENT_TEXT_VERSION)}</div>`:`<div class="small">${tx('team.consent.none')}</div>
+      <div class="row"><button class="btn btn-line" data-act="copy">${tx('team.consent.copy')}</button>${open?`<button class="btn btn-ink" data-act="wa">${tx('team.consent.wa')}</button>`:''}</div>
+      <div class="tpl"><div class="small muted" style="margin-bottom:4px;font-weight:600">${tx('team.consent.template_h')}</div>${esc(tx('team.consent.template',{client:l.first,advisor:adv(l.advisor),agent:a.name}))}</div>`}
+  </div>
+  <div class="sec">
+    <div class="sec-h"><b>${step(2,q.assess==='yes'||q.assess==='borderline')} ${tx('team.sec.assessment')}</b><span class="small muted">${q.assessBy?tx('team.assess.by_you'):tx('team.assess.by_agent')}</span></div>
+    <div class="grid2">
+      <div class="f"><label for="a_income">${tx('team.assess.income')}</label><input id="a_income" inputmode="numeric" value="${fmt(inp.income)}" ${open?'':'disabled'}></div>
+      <div class="f"><label for="a_debts">${tx('team.assess.debts')}</label><input id="a_debts" inputmode="numeric" value="${fmt(inp.debts)}" ${open?'':'disabled'}></div>
+      <div class="f"><label for="a_res">${tx('team.assess.residency')}</label><select id="a_res" ${open?'':'disabled'}>${Object.entries(RES).map(([k,v])=>`<option value="${k}" ${inp.residency===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="f"><label for="a_price">${tx('team.assess.price')}</label><input id="a_price" inputmode="numeric" value="${fmt(inp.price)}" ${open?'':'disabled'}></div>
+      <div class="f"><label for="a_down">${tx('team.assess.down')}</label><input id="a_down" inputmode="numeric" value="${inp.down}" ${open?'':'disabled'}></div>
+    </div>
+    <div id="a_verdict">${verdict(as)}</div>
+    ${open?`<div><button class="btn btn-line" data-act="assess">${tx('team.assess.save')}</button></div>`:''}
+  </div>
+  <div class="sec">
+    <div class="sec-h"><b>${step(3,q.docs)} ${tx('team.sec.documents')}</b>${q.docs?`<span class="pill good">${tx('team.docs.done',{date:date(q.docsAt||Date.now())})}</span>`:''}</div>
+    ${['passport','eid','income'].map(k=>`<label class="chk"><input type="checkbox" data-doc="${k}" ${dItems[k]?'checked':''} ${open&&!q.docs?'':'disabled'}> ${tx('team.docs.'+k)}</label>`).join('')}
+    ${open&&!q.docs?`<div><button class="btn btn-ink" data-act="docs" ${dItems.passport&&dItems.eid&&dItems.income?'':'disabled'}>${tx('team.docs.mark')}</button></div>`:''}
+  </div>
+  <div class="sec">
+    <div class="sec-h"><b>${step(4,q.done)} ${tx('team.sec.decision')}</b></div>
+    <div class="f"><label for="a_notes">${tx('team.notes')}</label><textarea id="a_notes" placeholder="${tx('team.notes_ph')}" ${open?'':'disabled'}>${esc(q.notes||'')}</textarea></div>
+    ${open?`
+      <div class="outcome"><b style="flex:none">${tx('team.outcome.h')}:</b><span>${outcome}</span></div>
+      <button class="btn btn-accent btn-wide" data-act="confirm" ${miss.length?'disabled':''}>${tx('team.confirm')}</button>
+      ${miss.length?`<div class="missing">${tx('team.missing',{items:miss.join(', ')})}</div>`:''}
+      ${ui.reject?`<div class="f"><label for="a_reason">${tx('team.reject_reason')}</label><select id="a_reason"><option value="">${tx('team.reject_pick')}</option>${CONSULTANT_REASONS.map(r=>`<option value="${r}" ${ui.reason===r?'selected':''}>${REASONS[r]}</option>`).join('')}</select></div>
+        <div class="row"><button class="btn btn-bad" data-act="reject-go" ${ui.reason?'':'disabled'}>${tx('team.reject_go')}</button><button class="btn btn-line" data-act="reject-cancel">${tx('team.cancel')}</button></div>`
+      :`<button class="btn btn-bad btn-wide" data-act="reject">${tx('team.reject')}</button>`}`:''}
+  </div>
+  <div class="sec"><div class="sec-h"><b>${tx('team.sec.log')}</b></div><div class="log">${log.map(e=>`<div><time>${dt(e.at)}</time><span>${esc(e.t)}</span></div>`).join('')||'<span class="muted small">—</span>'}</div></div>
+  ${open&&!q.consent?`<div class="sec"><details class="demo"><summary>${tx('team.demo')}</summary><p><button class="btn btn-line" data-act="sim-link">${tx('team.demo.link')}</button></p></details></div>`:''}`;
+}
+function verdict(as){if(!as)return `<div class="small muted">${tx('team.assess.none')}</div>`;const k={yes:'good',borderline:'warn',no:'bad'}[as.k];
+  return `<div class="verdict ${k}"><span class="v">${tx('team.assess.'+as.k)}</span><span class="small num" style="text-align:right">${as.dbr?tx('team.assess.dbr',{dbr:as.dbr.toFixed(0)}):tx('team.assess.by_agent')}${as.lowDown?'<br>'+tx('team.assess.min_down',{min:as.min,res:as.res}):''}</span></div>`}
+function readAssess(){return {income:num($('#a_income').value),debts:num($('#a_debts').value),residency:$('#a_res').value,price:num($('#a_price').value),down:num($('#a_down').value)}}
+
+function bindCard(l){
+  if(!l)return;const id=l.id,src=l.src,cl=l.first;
+  ['a_income','a_debts','a_res','a_price','a_down'].forEach(k=>{const e=$('#'+k);if(e)e.addEventListener('input',()=>{$('#a_verdict').innerHTML=verdict(assess(readAssess()))})});
+  document.querySelectorAll('[data-doc]').forEach(e=>e.addEventListener('change',()=>{const d=ui.docs[id]=ui.docs[id]||{};d[e.dataset.doc]=e.checked;const b=document.querySelector('[data-act="docs"]');if(b)b.disabled=!(d.passport&&d.eid&&d.income)}));
+  const notes=$('#a_notes');if(notes)notes.addEventListener('change',()=>mutate(src,id,d=>{d.q.notes=notes.value}));
+  const rs=$('#a_reason');if(rs)rs.addEventListener('change',()=>{ui.reason=rs.value;render()});
+  document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.act,l)));
+}
+async function act(a,l){
+  const id=l.id,src=l.src,now=Date.now(),cl=l.first;
+  if(a==='copy'){const link='https://lenty.com/c/'+id;try{await navigator.clipboard.writeText(link);toast(tx('team.toast.copied'))}catch(e){toast(tx('team.toast.copy_fail')+' '+link)}return}
+  if(a==='wa'||a==='sim-link'){const m=a==='wa'?'whatsapp':'link';mutate(src,id,d=>{d.q.consent=true;d.q.method=m;d.q.consentAt=now;d.q.consentTextVersion=CONSENT_TEXT_VERSION;d.q.consentBy=a==='wa'?ui.me:null},tx(m==='whatsapp'?'agent.msg.consent_wa':'agent.msg.consent_link',{client:cl}));toast(tx('team.toast.consent',{client:cl}))}
+  if(a==='assess'){const i=readAssess();const r=assess(i);mutate(src,id,d=>{d.q.input=i;d.q.assess=r?r.k:null;d.q.dbr=r?r.dbr:null;d.q.assessAt=now;d.q.assessBy=ui.me},r?tx('agent.msg.assess',{res:tx('team.assess.'+r.k)}):null);toast(tx('team.toast.assess',{res:r?tx('team.assess.'+r.k):'—'}))}
+  if(a==='docs'){mutate(src,id,d=>{d.q.docs=true;d.q.docsAt=now;d.q.docsBy=ui.me},tx('agent.msg.docs',{client:cl}));delete ui.docs[id];toast(tx('team.toast.docs',{client:cl}))}
+  if(a==='reject'){ui.reject=true;ui.reason='';render();return}
+  if(a==='reject-cancel'){ui.reject=false;render();return}
+  if(a==='reject-go'){const r=ui.reason;if(!r)return;mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS[r]}));ui.reject=false;toast(tx('team.toast.rejected',{client:cl,reason:REASONS[r]}))}
+  if(a==='confirm'){
+    const fresh=allLeads().find(x=>x.id===id);if(!fresh||!ready(fresh))return;
+    const res=decideBonus(fresh);const k=b=>tx(b.starter?'team.kind.starter':'team.kind.regular');
+    let msg;if(res.skip)msg=tx('agent.msg.qualified.'+res.skip);else msg=tx('agent.msg.qualified.'+res.bonus.status,{amount:aed(res.bonus.amt),kind:k(res.bonus)});
+    mutate(src,id,d=>{d.q.call=true;d.q.done=true;d.q.at=now;d.q.by=ui.me;d.stage=1;if(res.bonus){d.bonus={amt:res.bonus.amt,starter:res.bonus.starter,status:res.bonus.status,at:now}}else d.bonusSkip=res.skip},msg);
+    toast(tx('team.toast.qualified',{client:cl,bonus:res.skip?tx('team.outcome.'+res.skip,{agent:agentInfo(l.agent).name,limit:SETTINGS.monthly_limit}):tx('team.outcome.'+res.bonus.status,{amount:aed(res.bonus.amt),kind:k(res.bonus),agent:agentInfo(l.agent).name,why:res.bonus.why?tx('team.why.'+res.bonus.why):''})}));
+  }
+  render();
+}
+function resetDemo(){try{localStorage.removeItem(TEAM_KEY)}catch(e){}ui.sel=null;team();expireAll();render();toast('Demo leads reset')}
+
+/* ===================== Boot ===================== */
+const me=$('#me');me.innerHTML=ADVISORS.map(a=>`<option value="${a.id}" ${a.id===ui.me?'selected':''}>${a.n}</option>`).join('');
+me.addEventListener('change',()=>{ui.me=me.value;try{localStorage.setItem('lenty-team-me',ui.me)}catch(e){}});
+team();expireAll();render();
+window.addEventListener('storage',e=>{if(e.key===AGENT_KEY||e.key===TEAM_KEY){expireAll();const y=window.scrollY;render();window.scrollTo(0,y)}});
+setInterval(()=>{if(expireAll())render()},60000);
+fetch('icon.svg').then(r=>r.text()).then(t=>{document.getElementById('lenty').innerHTML=[...t.matchAll(/<path d="([^"]+)"/g)].map(m=>`<path d="${m[1]}"/>`).join('')}).catch(()=>{});
+</script>
+</body>
+</html>

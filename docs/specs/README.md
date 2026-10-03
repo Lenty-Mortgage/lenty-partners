@@ -4,3 +4,5 @@
 - `qualified-lead-reference.html` — прототип v1.02 як візуальний референс. Якщо прототип і ТЗ розходяться, правильним вважається ТЗ.
 - Стіна «До / Після»: https://claude.ai/artifact/TwbwLUE35rgPE9gCQrB94Q
 - Документ ТЗ: https://claude.ai/artifact/LGFS3BeXAsjwx3pdpb9xLq
+- `qualified-lead-checklist.md` — чек-лист відповідності прототипу кожному пункту ТЗ; оновлюється після кожного кроку.
+- Сторінка консультанта: `consultant.html` (у тому ж браузері ділить дані із застосунком агента, тож можна зіграти обидві ролі).
