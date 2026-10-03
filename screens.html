@@ -93,6 +93,9 @@ const GROUPS=[
   ['account','Account','Profile, notifications, help, log out.'],
   ['wallet','Payout account','IBAN for commission payouts.','sheet=iban'],
  ]],
+ ['Added in v1.02','New screens are added at the end so earlier numbers never change.',[
+  ['deal','Deal · bonus on review','Priya: qualified, AED 100 bonus waiting for the check.','deal=priya'],
+ ]],
 ];
 let n=0;
 document.getElementById('main').innerHTML=GROUPS.map(([g,sub,items])=>`<section><h2>${g}</h2><p class="sub">${sub}</p><div class="grid">${items.map(([s,t,d,q])=>{n++;const url=`./?screen=${s}${q?'&'+q:''}`;return `<a class="shot" href="${url}" target="_blank" rel="noopener" aria-label="Screen ${n}: ${t}"><div class="phone"><div class="in"><iframe loading="lazy" src="${url}" title="${t}" tabindex="-1"></iframe></div></div><div class="meta"><span class="n">${n}</span><div><div class="t">${t}</div><div class="d">${d}</div></div></div></a>`}).join('')}</div></section>`).join('');
