@@ -172,6 +172,8 @@ on_hold / accrued / paid ──(шахрайство, до 30 днів)──►
 | Чек-лист, пункт Consent | Link sent to your client · Confirmed via link · Replied YES on WhatsApp · Given in your link form |
 | Рядок бонусу до кваліфікації | Lead bonus · Accrued when qualification is done · {N} days left |
 | Лід не кваліфіковано | Not qualified · Reason: {reason}. You keep the lead protection for 90 days. |
+| Лід закрито після перевірки (причина fraud; слово «Fraud» агенту не показується), статус | Closed after review |
+| Лід закрито після перевірки, текст для агента | This lead was closed after a review by Lenty. It doesn't earn a lead bonus and isn't protected. Contact the partner team if you have questions. |
 
 ## Інтерфейс консультанта й адміна
 

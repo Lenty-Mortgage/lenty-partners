@@ -346,6 +346,11 @@ const TXT={
   "promo.lead_bonus.line.cancelled":"Cancelled",
   "promo.lead_bonus.line.cancelled_deducted":"Cancelled after payout · deducted from your next payouts",
   "core.promo_slot.more":"Learn more",
+  "core.closed_review.status":"Closed after review",
+  "core.closed_review.text":"This lead was closed after a review by Lenty. It doesn't earn a lead bonus and isn't protected. Contact the partner team if you have questions.",
+  "core.assess.min_down":"Down payment is below the {min}% minimum for a {res}",
+  "core.duplicate.toast":"Duplicate client: already referred to Lenty in the last 90 days",
+  "core.duplicate.update":"Not qualified: Duplicate client. This client was already referred to Lenty in the last 90 days.",
   "core.programme.no_end":"further notice",
   "promo.lead_bonus.line.limit":"Monthly limit reached. This lead won't earn a bonus.",
   "promo.lead_bonus.line.not_eligible":"Referred while the bonus programme was off. No lead bonus.",
@@ -356,7 +361,7 @@ const TXT={
   "promo.lead_bonus.limit_title":"Monthly limit reached.",
   "promo.lead_bonus.limit_body":"This lead won't earn a bonus. Your commission is not affected.",
   "promo.lead_bonus.counter":"Paid leads this month",
-  "promo.lead_bonus.counter_value":"3 of {limit}",
+  "promo.lead_bonus.counter_value":"{n} of {limit}",
   "promo.lead_bonus.link_hint":"Clients who sign up through your link earn you the same {bonusAed} lead bonus once they qualify.",
   "promo.lead_bonus.terms.per_client":"Per qualified client",
   "promo.lead_bonus.terms.first":"Your first {starterN} clients",
@@ -508,6 +513,7 @@ function statusPill(d){
   if(d.status==='payout')return `<span class="pill warn">${I.clock} Payout in ${daysLeft(d)} days</span>`;
   if(d.status==='paid')return `<span class="pill good">${I.check} Paid ${date(d.paidAt)}</span>`;
   if(d.status==='expired')return `<span class="pill bad">Expired · not qualified in 14 days</span>`;
+  if(d.q&&d.q.reason==='fraud')return `<span class="pill bad">${tx('core.closed_review.status')}</span>`;
   if(d.status==='lost')return d.q&&d.q.reason?`<span class="pill bad">Not qualified · ${REASONS[d.q.reason]}</span>`:`<span class="pill bad">Not proceeding</span>`;
   if(d.stage===0&&d.q&&!d.q.done){if(!d.q.consent)return `<span class="pill warn">${I.clock} Waiting for client consent</span>`;return `<span class="pill">1/8 · Qualification · ${qDone(d)} of 4</span>`}
   if(d.status==='paused')return `<span class="pill grey">On hold</span>`;
@@ -522,6 +528,7 @@ function qList(d){const q=d.q||{};const st=[q.consent,q.assess==='yes'||q.assess
   return `<div class="qlist">${QITEMS.map((t,i)=>`<div class="row"><span class="${st[i]?'ok':'no'}">${st[i]?I.check:''}</span><span class="grow"><b style="font-weight:600">${t}</b> <span class="muted">${sub[i]}</span></span></div>`).join('')}</div>`}
 function bonusLine(d){
   if(!PROMO&&!d.bonus)return '';
+  if(d.q&&d.q.reason==='fraud')return `<div class="brow"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('core.closed_review.status')}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
   if(d.q&&d.q.reason)return `<div class="brow" data-chg="3"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.not_qualified',{reason:REASONS[d.q.reason]})}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
   if(d.bonus){const b=d.bonus;const lab=tx('promo.lead_bonus.status.'+b.status);const k={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
     return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}${b.starter?tx('promo.lead_bonus.starter_suffix'):''}</b><span class="muted">${tx('promo.lead_bonus.line.'+(b.status==='cancelled'&&b.deducted?'cancelled_deducted':b.status),{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
@@ -692,7 +699,7 @@ deal(){
     if(pi===0)tl+='<div data-chg="1" style="margin:0 -8px;padding:0 8px 2px;border-radius:12px">';
     tl+=`<div class="phase-h"><span class="label">${ph[0]}</span>${ph[1]?`<span class="small muted">${ph[1]}</span>`:''}</div><div>`;
     STAGES.forEach((s,i)=>{if(s.p!==pi)return;const done=all||i<d.stage||(i===7&&d.stage>=7);const cur=!all&&i===d.stage&&d.status==='active';
-      tl+=`<div class="tl ${done?'done':''} ${cur?'cur':''}"><div class="d">${done?I.check:''}</div><div class="grow"><div class="row between"><span class="t1">${s.t}</span><span class="small muted">${s.eta}</span></div>${cur?`<div class="t2">${s.d}</div>`:''}${i===0&&cur&&d.q?qList(d):''}${i===0&&d.q&&d.q.done?`<div class="t2">Qualified ${date(d.q.at)}</div>`:''}${i===0&&d.q&&d.q.reason?`<div class="t2" style="color:var(--bad)">Not qualified: ${REASONS[d.q.reason]}</div>`:''}</div></div>`});
+      tl+=`<div class="tl ${done?'done':''} ${cur?'cur':''}"><div class="d">${done?I.check:''}</div><div class="grow"><div class="row between"><span class="t1">${s.t}</span><span class="small muted">${s.eta}</span></div>${cur?`<div class="t2">${s.d}</div>`:''}${i===0&&cur&&d.q?qList(d):''}${i===0&&d.q&&d.q.done?`<div class="t2">Qualified ${date(d.q.at)}</div>`:''}${i===0&&d.q&&d.q.reason?`<div class="t2" style="color:var(--bad)">${d.q.reason==='fraud'?tx('core.closed_review.status'):'Not qualified: '+REASONS[d.q.reason]}</div>`:''}</div></div>`});
     tl+='</div>';if(pi===0)tl+='</div>';
   });
   const payLine=d.status==='paid'?`Paid to your account on ${date(d.paidAt)}`:d.status==='payout'?`Due ${date(payoutAt(d))} · ${daysLeft(d)} of 45 days left`:'Paid 45 days after the loan is disbursed';
@@ -711,7 +718,7 @@ deal(){
       <div style="height:6px;border-radius:3px;background:var(--line-2);overflow:hidden"><div style="height:100%;width:${prog}%;background:${d.status==='paid'?'var(--good)':'var(--accent)'}"></div></div>
       <span class="small muted">${payLine}</span>
     </div>
-    ${d.q&&d.q.reason?`<div class="verdict bad" data-chg="2"><span class="v" style="font-size:22px">Not qualified</span><span class="body" style="color:var(--ink-2)">Reason: ${REASONS[d.q.reason]}. You keep the lead protection for 90 days. If ${esc(d.first)}'s numbers change, refer again.</span></div>`:''}
+    ${d.q&&d.q.reason==='fraud'?`<div class="verdict bad"><span class="v" style="font-size:22px">${tx('core.closed_review.status')}</span><span class="body" style="color:var(--ink-2)">${tx('core.closed_review.text')}</span></div>`:d.q&&d.q.reason?`<div class="verdict bad" data-chg="2"><span class="v" style="font-size:22px">Not qualified</span><span class="body" style="color:var(--ink-2)">Reason: ${REASONS[d.q.reason]}. You keep the lead protection for 90 days. If ${esc(d.first)}'s numbers change, refer again.</span></div>`:''}
     <div class="card pad"><div class="row between" style="margin-bottom:6px"><span class="label">Journey to the keys</span><span class="small muted">${all?'8':Math.min(d.stage+1,8)} of 8</span></div>${tl}${bonusLine(d)}</div>
     <div class="card" style="overflow:hidden">
       <div class="item"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">Mortgage advisor · ${a.l.join(', ')}</span></span><button class="iconbtn" style="color:#16a34a" onclick="toast('Opening WhatsApp with ${esc(a.n.split(' ')[0])}')" aria-label="WhatsApp">${I.wa}</button></div>
@@ -746,7 +753,7 @@ refer(){
   const head=`<div class="px stack g12" style="flex:none;padding-bottom:12px"><div class="row between"><button class="back" onclick="${st>1?'refBack()':'cancelRefer()'}" aria-label="Back">${st>1?I.back:I.close}</button><span class="small muted">Step ${st} of 3</span></div><div class="steps"><i class="on"></i><i class="${st>1?'on':''}"></i><i class="${st>2?'on':''}"></i></div></div>`;
   const loan=f.price*(1-f.down/100);
   let body='';
-  const bon=tmp.starter?tx('promo.lead_bonus.banner_starter'):tx('promo.lead_bonus.banner');
+  const bon=starterBanner()?tx('promo.lead_bonus.banner_starter'):tx('promo.lead_bonus.banner');
   if(st===1)body=`${!PROMO?promoSlot():`<div class="bonusbar" data-chg="1"><div class="aurora"></div><span class="grow" style="position:relative"><b>${bon}</b><span style="font-size:12.5px;color:rgba(255,255,255,.72)">${tx('promo.lead_bonus.banner_sub')}</span></span><button class="link" onclick="howSheet()">${tx('promo.lead_bonus.how_link')}</button></div>`}
     <div class="stack g8"><h1 class="h1">Who are you referring?</h1><p class="body muted" style="margin:0">Their advisor will message them on WhatsApp within an hour.</p></div>
     <div><div class="f-label">First name</div><div class="field"><input id="r_first" autocomplete="off" value="${esc(f.first)}"></div></div>
@@ -768,9 +775,9 @@ refer(){
     <div><div class="f-label">Client's preferred language</div><div class="field"><select id="r_lang">${LANGS.map(l=>`<option ${f.lang===l?'selected':''}>${l}</option>`).join('')}</select>${I.down}</div></div>
     <button class="card pad row" style="text-align:left" onclick="advisorSheet()"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span class="small muted">Mortgage advisor</span><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">${a.l.join(', ')}</span></span><span class="link">Change</span></button>
     <div><div class="f-label">Notes for the advisor <span class="opt">Optional</span></div><textarea class="area" id="r_notes" placeholder="Viewing on Saturday, self-employed, wants a 5-year fixed rate…">${esc(f.notes)}</textarea></div>
-    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div>${PROMO?`<div class="kv" data-chg="1"><span>${tx('promo.lead_bonus.title')}</span><span class="num">${tmp.limit?'<span class="muted" style="font-weight:500">'+tx('promo.lead_bonus.summary_not_this_month')+'</span>':aed(tmp.starter?STARTER:BONUS)+' <span class="muted" style="font-weight:400">'+tx('promo.lead_bonus.summary_when_qualified')+'</span>'}</span></div>`:''}</div>
+    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div>${PROMO?`<div class="kv" data-chg="1"><span>${tx('promo.lead_bonus.title')}</span><span class="num">${limitReached()?'<span class="muted" style="font-weight:500">'+tx('promo.lead_bonus.summary_not_this_month')+'</span>':aed(starterBanner()?STARTER:BONUS)+' <span class="muted" style="font-weight:400">'+tx('promo.lead_bonus.summary_when_qualified')+'</span>'}</span></div>`:''}</div>
     <button class="check ${f.consent?'on':''}" data-chg="2" style="border-radius:10px" onclick="refSave();tmp.ref.consent=!tmp.ref.consent;render()"><span class="box">${I.check}</span><span>${esc(f.first)} agreed that Lenty can contact them. <span class="muted">We'll send them a link to confirm.</span></span></button>
-    ${!PROMO?'':tmp.limit?`<div class="sample" data-chg="3" style="background:var(--warn-soft);color:var(--warn)">${I.alert}<span><b>${tx('promo.lead_bonus.limit_title')}</b> ${tx('promo.lead_bonus.limit_body')}</span></div>`:`<div class="card pad row between small" data-chg="3"><span class="muted">${tx('promo.lead_bonus.counter')}</span><span class="num" style="font-weight:600">${tx('promo.lead_bonus.counter_value')}</span></div>`}`;}
+    ${!PROMO?'':limitReached()?`<div class="sample" data-chg="3" style="background:var(--warn-soft);color:var(--warn)">${I.alert}<span><b>${tx('promo.lead_bonus.limit_title')}</b> ${tx('promo.lead_bonus.limit_body')}</span></div>`:`<div class="card pad row between small" data-chg="3"><span class="muted">${tx('promo.lead_bonus.counter')}</span><span class="num" style="font-weight:600">${tx('promo.lead_bonus.counter_value',{n:paidLeadsThisMonth()})}</span></div>`}`;}
   const ok=st===1?(f.first.trim()&&f.phone.replace(/\D/g,'').length>=7):st===2?f.price>0:f.consent;
   return `<div class="view"><div class="top"></div>${head}<div class="scroll"><div class="px stack g16" style="padding-bottom:20px">${body}</div></div>
   <div class="px" style="padding-top:10px;padding-bottom:34px;flex:none;border-top:1px solid var(--line-2);background:var(--ground)"><button class="btn btn-ink" id="r_next" ${ok?'':'disabled'} onclick="${st<3?'refNext()':'submitRefer()'}">${st<3?'Continue':'Send to Lenty'}</button></div></div>`;
@@ -956,9 +963,12 @@ account(){
   </div><div style="height:40px"></div></div></div>`;
 },
 };
-function assess(f){const loan=f.price*(1-f.down/100),r=4.25/1200,n=300,pay=loan*r/(1-Math.pow(1+r,-n));if(!f.income)return null;const dbr=(f.debts+pay)/f.income*100;return {dbr,k:dbr<=42?'yes':dbr<=50?'borderline':'no'}}
+/* Assessment from the spec: DBR up to 50% AND the minimum down payment for the client's residency (same rule as the consultant page) */
+const MIN_DOWN={national:15,resident:20,nonresident:40};
+function assess(f){const loan=f.price*(1-f.down/100),r=4.25/1200,n=300,pay=loan*r/(1-Math.pow(1+r,-n));if(!f.income)return null;const dbr=(f.debts+pay)/f.income*100;
+  const lowDown=f.down<(MIN_DOWN[f.residency]||20);return {dbr,lowDown,k:lowDown?'no':dbr<=42?'yes':dbr<=50?'borderline':'no'}}
 function assessCard(f){const a=assess(f);if(!a)return `<div class="small muted">Enter income to see if ${esc(f.first||'your client')} is likely to qualify.</div>`;
-  const m={yes:['good','Yes','Likely to qualify'],borderline:['warn','Borderline','Can still qualify. Your advisor will confirm'],no:['bad','No',PROMO?tx('core.assess.no.with_bonus'):tx('core.assess.no.no_bonus')]}[a.k];
+  const m={yes:['good','Yes','Likely to qualify'],borderline:['warn','Borderline','Can still qualify. Your advisor will confirm'],no:['bad','No',a.lowDown?tx('core.assess.min_down',{min:MIN_DOWN[f.residency]||20,res:RES[f.residency]||''}):PROMO?tx('core.assess.no.with_bonus'):tx('core.assess.no.no_bonus')]}[a.k];
   return `<div class="verdict ${m[0]}" style="padding:14px 16px;gap:2px"><span class="small" style="font-weight:600;color:var(--ink-2)">Assessment · DBR ${a.dbr.toFixed(0)}% of 50%</span><span class="v" style="font-size:22px">${m[1]}</span><span class="small" style="color:var(--ink-2)">${m[2]}</span></div>`}
 function dealRow(d){
   return `<button class="deal" onclick="go('deal',{id:'${d.id}'})">
@@ -1049,7 +1059,26 @@ function refBack(){refSave();tmp.refStep--;go('refer')}
 function submitRefer(){
   refSave();const f=tmp.ref,now=Date.now(),a=adv(f.advisor);
   const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PROMO&&now<PROGRAMME_END,terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER,starterEnabled:!!ADMIN.starter_bonus_enabled},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
-  S.deals.push(d);save();$('#r_next').textContent='Sending…';setTimeout(()=>go('done',{id:d.id}),600);
+  /* spec: a duplicate (same phone, email or Emirates ID already in the system within 90 days, any agent) is rejected right after submission */
+  const dup=findDuplicate(d);
+  if(dup){d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.updates.push({at:now,t:tx('core.duplicate.update')})}
+  S.deals.push(d);save();$('#r_next').textContent='Sending…';
+  setTimeout(()=>{if(dup){go('deal',{id:d.id});toast(tx('core.duplicate.toast'))}else go('done',{id:d.id})},600);
+}
+const TEAM_KEY='lenty-team-v1.02'; /* demo leads of other agents (consultant page), same browser */
+const phoneKey=(cc,ph)=>String((cc||'')+(ph||'')).replace(/\D/g,'');
+/* Monthly counter and "new agent" from the agent's own data (spec: bonuses created this month count towards the limit, starters included) */
+const sameMonth=t=>{if(!t)return false;const a=new Date(t),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()};
+function paidLeadsThisMonth(){return (S.deals||[]).filter(d=>d.bonus&&d.bonus.status!=='cancelled'&&sameMonth(d.bonus.at)).length}
+function isNewAgent(){if(!ADMIN.starter_bonus_enabled)return false;const ds=S.deals||[];return ds.filter(d=>d.q&&d.q.done).length<STARTER_N&&ds.filter(d=>d.bonus&&d.bonus.starter&&d.bonus.status!=='cancelled').length<STARTER_N}
+/* screen previews keep their ?starter=1 / ?limit=1 switches; the live app uses the agent's real numbers */
+function starterBanner(){return PREVIEW?!!tmp.starter:isNewAgent()}
+function limitReached(){return PREVIEW?!!tmp.limit:paidLeadsThisMonth()>=LIMIT}
+function findDuplicate(d){
+  const since=Date.now()-90*DAY,pk=phoneKey(d.cc,d.phone),em=(d.email||'').trim().toLowerCase();
+  let others=(S.deals||[]).filter(x=>x.id!==d.id);
+  try{const t=JSON.parse(localStorage.getItem(TEAM_KEY)||'null');if(t&&Array.isArray(t.leads))others=others.concat(t.leads)}catch(e){}
+  return others.find(x=>(x.createdAt||0)>=since&&!(x.q&&x.q.reason==='duplicate')&&((pk&&phoneKey(x.cc,x.phone)===pk)||(em&&(x.email||'').trim().toLowerCase()===em)))||null;
 }
 function contactsSheet(){
   const C=[['Maria','Santos','+971','52 334 1189'],['Liam','O\'Connor','+44','7911 123 456'],['Priya','Nair','+91','98450 11223'],['Khalid','Al Mansoori','+971','50 998 2210']];

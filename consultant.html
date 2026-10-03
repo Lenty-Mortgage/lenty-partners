@@ -185,7 +185,8 @@ const TXT={
   "team.assess.yes":"Yes","team.assess.borderline":"Borderline","team.assess.no":"No","team.assess.none":"No assessment yet",
   "team.assess.dbr":"DBR {dbr}% of 50%","team.assess.min_down":"Down payment below the {min}% minimum for {res}",
   "team.docs.passport":"Passport","team.docs.eid":"Emirates ID (or visa for a non-resident)","team.docs.income":"Salary certificate or proof of income",
-  "team.docs.mark":"Documents received","team.docs.done":"Documents received {date}",
+  "team.docs.mark":"Documents received","team.docs.eid_no":"Emirates ID number (checked for duplicates)",
+  "team.toast.duplicate":"Duplicate client: {client} matches {other} ({by}). Rejected automatically.","team.docs.done":"Documents received {date}",
   "team.notes":"Notes from the call","team.notes_ph":"Intent to buy, timeline, anything the bank should know",
   "team.confirm":"Confirm qualification","team.reject":"Reject","team.reject_reason":"Reason","team.reject_pick":"Choose a reason","team.reject_go":"Reject lead","team.cancel":"Cancel",
   "team.missing":"To confirm: {items}","team.missing.consent":"client consent","team.missing.assess":"assessment Yes or Borderline","team.missing.docs":"documents",
@@ -255,7 +256,7 @@ function demoLeads(){
     mk({id:'t2',agent:'g1',first:'Tom',last:'Becker',cc:'+49',phone:'151 2345 6781',advisor:'a5',ago:3*DAY,input:{income:30000,debts:2500,residency:'resident',price:2300000,down:20},q:{consent:true,method:'link',consentAt:now-2.6*DAY}}),
     mk({id:'t3',agent:'g1',first:'Viktor',last:'Hale',phone:'55 302 9917',advisor:'a4',ago:4*DAY,source:'agent_link',riskFlags:['same_device'],input:{income:55000,debts:1500,residency:'resident',price:2600000,down:25},q:{consent:true,method:'form',consentAt:now-4*DAY,docs:true,docsAt:now-1*DAY}}),
     mk({id:'t4',agent:'g2',first:'Aisha',last:'Rahman',phone:'52 118 6620',advisor:'a2',ago:5*DAY,input:{income:38000,debts:2000,residency:'national',price:1900000,down:15},q:{consent:true,method:'whatsapp',consentAt:now-4.5*DAY,docs:true,docsAt:now-3*h}}),
-    mk({id:'t5',agent:'g3',first:'Noor',last:'Hassan',phone:'56 774 3021',advisor:'a1',ago:6*DAY,input:{income:36000,debts:1800,residency:'resident',price:1750000,down:20},q:{consent:true,method:'link',consentAt:now-5.8*DAY,docs:true,docsAt:now-2*DAY}}),
+    mk({id:'t5',agent:'g3',first:'Noor',last:'Hassan',phone:'56 774 3021',advisor:'a1',ago:6*DAY,input:{income:36000,debts:1800,residency:'resident',price:1750000,down:20},q:{consent:true,method:'link',consentAt:now-5.8*DAY,docs:true,docsAt:now-2*DAY,eid:'784-1991-4455667-2'}}),
     mk({id:'t6',agent:'g4',first:'Grace',last:'Liu',cc:'+65',phone:'8123 4567',advisor:'a3',ago:7*DAY,input:{income:31000,debts:3200,residency:'nonresident',price:1600000,down:40},q:{consent:true,method:'link',consentAt:now-6.5*DAY,docs:true,docsAt:now-1*DAY}}),
     mk({id:'t7',agent:'g1',first:'Leo',last:'Martin',cc:'+33',phone:'6 12 34 56 78',advisor:'a5',ago:1*DAY,bonusEligible:false,input:{income:40000,debts:2000,residency:'resident',price:2000000,down:20},q:{consent:true,method:'link',consentAt:now-20*h}}),
     mk({id:'t8',agent:'g1',first:'Sam',last:'Patel',cc:'+91',phone:'98111 22334',advisor:'a3',ago:15*DAY,input:{income:28000,debts:4000,residency:'resident',price:1500000,down:20}}),
@@ -309,6 +310,16 @@ function state(l){
   if(!l.q.consent)return 'consent_pending';
   return 'in_qualification';
 }
+const digits=v=>String(v||'').replace(/\D/g,'');
+function findDuplicate(l){
+  const pk=digits((l.cc||'')+(l.phone||'')),em=(l.email||'').trim().toLowerCase(),eid=digits(l.q&&l.q.eid);
+  /* only an earlier lead (within 90 days before this one) makes this one a duplicate; leads already rejected as duplicates don't count */
+  const at=l.createdAt||Date.now();
+  for(const x of allLeads()){const xa=x.createdAt||0;if(x.id===l.id||xa>=at||xa<at-90*DAY||(x.q&&x.q.reason==='duplicate'))continue;
+    if(eid&&digits(x.q&&x.q.eid)===eid)return {lead:x,by:'Emirates ID'};
+    if(pk&&digits((x.cc||'')+(x.phone||''))===pk)return {lead:x,by:'phone'};
+    if(em&&(x.email||'').trim().toLowerCase()===em)return {lead:x,by:'email'}}
+  return null}
 function ready(l){const q=l.q;return q.consent&&(q.assess==='yes'||q.assess==='borderline')&&q.docs}
 function decideBy(l){const q=l.q;if(!ready(l))return null;return addWorkingDays(Math.max(q.consentAt||0,q.docsAt||0,q.assessAt||0,l.createdAt),SETTINGS.decision_working_days)}
 
@@ -327,7 +338,7 @@ function expireAll(){
 }
 
 /* ===================== UI state ===================== */
-const ui={tab:'queue',filter:'decide',sel:null,me:'a6',reject:false,reason:'',docs:{},bf:{agent:'all',status:'all',period:'all'},cancel:null,payConfirm:false,resetConfirm:false};
+const ui={eid:{},tab:'queue',filter:'decide',sel:null,me:'a6',reject:false,reason:'',docs:{},bf:{agent:'all',status:'all',period:'all'},cancel:null,payConfirm:false,resetConfirm:false};
 try{ui.me=localStorage.getItem('lenty-team-me')||'a6';ui.tab=localStorage.getItem('lenty-team-tab')||'queue'}catch(e){}
 
 function counts(ls){const c={decide:0,consent:0,progress:0,closed:0,all:ls.length};ls.forEach(l=>{c[bucket(l)]++});return c}
@@ -423,6 +434,7 @@ function leadCard(l){
   <div class="sec">
     <div class="sec-h"><b>${step(3,q.docs)} ${tx('team.sec.documents')}</b>${q.docs?`<span class="pill good">${tx('team.docs.done',{date:date(q.docsAt||Date.now())})}</span>`:''}</div>
     ${['passport','eid','income'].map(k=>`<label class="chk"><input type="checkbox" data-doc="${k}" ${dItems[k]?'checked':''} ${open&&!q.docs?'':'disabled'}> ${tx('team.docs.'+k)}</label>`).join('')}
+    <div class="f"><label for="a_eid">${tx('team.docs.eid_no')}</label><input id="a_eid" value="${esc(q.eid||ui.eid[l.id]||'')}" placeholder="784-1990-1234567-1" ${open&&!q.docs?'':'disabled'}></div>
     ${open&&!q.docs?`<div><button class="btn btn-ink" data-act="docs" ${dItems.passport&&dItems.eid&&dItems.income?'':'disabled'}>${tx('team.docs.mark')}</button></div>`:''}
   </div>
   <div class="sec">
@@ -456,7 +468,13 @@ async function act(a,l){
   if(a==='copy'){const link='https://lenty.com/c/'+id;try{await navigator.clipboard.writeText(link);toast(tx('team.toast.copied'))}catch(e){toast(tx('team.toast.copy_fail')+' '+link)}return}
   if(a==='wa'||a==='sim-link'){const m=a==='wa'?'whatsapp':'link';mutate(src,id,d=>{d.q.consent=true;d.q.method=m;d.q.consentAt=now;d.q.consentTextVersion=CONSENT_TEXT_VERSION;d.q.consentBy=a==='wa'?ui.me:null},tx(m==='whatsapp'?'agent.msg.consent_wa':'agent.msg.consent_link',{client:cl}));toast(tx('team.toast.consent',{client:cl}))}
   if(a==='assess'){const i=readAssess();const r=assess(i);mutate(src,id,d=>{d.q.input=i;d.q.assess=r?r.k:null;d.q.dbr=r?r.dbr:null;d.q.assessAt=now;d.q.assessBy=ui.me},r?tx('agent.msg.assess',{res:tx('team.assess.'+r.k)}):null);toast(tx('team.toast.assess',{res:r?tx('team.assess.'+r.k):'—'}))}
-  if(a==='docs'){mutate(src,id,d=>{d.q.docs=true;d.q.docsAt=now;d.q.docsBy=ui.me},tx('agent.msg.docs',{client:cl}));delete ui.docs[id];toast(tx('team.toast.docs',{client:cl}))}
+  if(a==='docs'){
+    const eid=($('#a_eid')||{value:''}).value.trim();
+    /* spec: duplicate by phone, email or Emirates ID among all leads in the last 90 days -> rejected automatically */
+    const dup=findDuplicate(Object.assign({},l,{q:Object.assign({},l.q,{eid})}));
+    if(dup){mutate(src,id,d=>{d.q.eid=eid;d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS.duplicate}));
+      delete ui.docs[id];toast(tx('team.toast.duplicate',{client:cl,other:dup.lead.first+' '+(dup.lead.last||''),by:dup.by}));render();return}
+    mutate(src,id,d=>{d.q.docs=true;d.q.docsAt=now;d.q.docsBy=ui.me;if(eid)d.q.eid=eid},tx('agent.msg.docs',{client:cl}));delete ui.docs[id];toast(tx('team.toast.docs',{client:cl}))}
   if(a==='reject'){ui.reject=true;ui.reason='';render();return}
   if(a==='reject-cancel'){ui.reject=false;render();return}
   if(a==='reject-go'){const r=ui.reason;if(!r)return;mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS[r]}));ui.reject=false;toast(tx('team.toast.rejected',{client:cl,reason:REASONS[r]}))}
@@ -500,10 +518,11 @@ Object.assign(TXT,{
   "admin.reset":"Reset demo data","admin.reset_confirm":"Reset all demo data in this browser? This can't be undone.","admin.reset_go":"Yes, reset everything",
   "agent.msg.fraud_bonus_cancelled":"Lead bonus of {amount} cancelled.",
   "agent.msg.fraud_bonus_deducted":"Lead bonus of {amount} cancelled and will be deducted from your next payouts.",
+  "agent.msg.closed_review":"This lead was closed after a review by Lenty. It doesn't earn a lead bonus and isn't protected. Contact the partner team if you have questions.",
   "agent.msg.bonus_approved":"Your {amount} lead bonus was approved and accrued.",
   "agent.msg.bonus_paid":"Lead bonus of {amount} paid to your account.",
-  "agent.msg.bonus_cancelled":"Lead bonus of {amount} cancelled: {reason}.",
-  "agent.msg.bonus_deducted":"Lead bonus of {amount} cancelled: {reason}. It will be deducted from your next payouts.",
+  "agent.msg.bonus_cancelled":"Lead bonus of {amount} cancelled after a review by Lenty.",
+  "agent.msg.bonus_deducted":"Lead bonus of {amount} cancelled after a review by Lenty. It will be deducted from your next payouts.",
 });
 const FRAUD_REASONS=['fake','own','dup'];
 const dubai=(t,o)=>new Date(t).toLocaleDateString('en-GB',Object.assign({timeZone:'Asia/Dubai',day:'numeric',month:'short',year:'numeric'},o));
@@ -611,7 +630,7 @@ function bindAdmin(){
     const bo=l.bonus&&l.bonus.status!=='cancelled'?l.bonus:null,canCancel=bo&&windowLeft(bo)>0,wasPaid=bo&&bo.status==='paid';
     mutate(src,id,d=>{d.status='lost';d.q.reason='fraud';d.q.rejectedAt=now;d.q.by='admin';
       if(canCancel){d.bonus.status='cancelled';d.bonus.cancelledAt=now;d.bonus.cancelReason=tx('admin.fraud.lead');d.bonus.deducted=wasPaid}},
-      tx('agent.msg.rejected',{reason:REASONS.fraud})+(canCancel?' '+tx(wasPaid?'agent.msg.fraud_bonus_deducted':'agent.msg.fraud_bonus_cancelled',{amount:aed(bo.amt)}):''));
+      tx('agent.msg.closed_review')+(canCancel&&wasPaid?' '+tx('agent.msg.fraud_bonus_deducted',{amount:aed(bo.amt)}):''));
     toast(canCancel?'Lead rejected as fraud, bonus cancelled':bo?'Lead rejected as fraud. Cancellation window closed, bonus kept':'Lead rejected as fraud');render()}));
 }
 function exportCsv(){
