@@ -315,8 +315,9 @@ function applyAdmin(){const a=ADMIN=loadAdmin();
   else{SETTINGS.lead_bonus_ends=SETTINGS.lead_bonus_ends_long=tx('core.programme.no_end')}
   PROMO=programmeOn(a);applyPromoTexts()}
 function applyPromoTexts(){STAGES[0].d=tx(PROMO?'core.stage.qualification.with_bonus':'core.stage.qualification.no_bonus');PHASES[0][1]=PROMO?tx('promo.lead_bonus.phase_subtitle'):tx('core.phase.qualification.no_bonus')}
+function safeLink(v){if(!v)return false;try{return new URL(v).protocol==='https:'}catch(e){return false}}
 function promoSlot(){if(PREVIEW)return '';const sl=ADMIN.promo_slot||{},now=Date.now();if(!sl.text||(sl.from&&now<sl.from)||(sl.to&&now>=sl.to))return '';
-  return `<div class="bonusbar"><div class="aurora"></div><span class="grow" style="position:relative"><b>${esc(sl.text)}</b></span>${sl.link?`<a class="link" href="${esc(sl.link)}" target="_blank" rel="noopener">${tx('core.promo_slot.more')}</a>`:''}</div>`}
+  return `<div class="bonusbar"><div class="aurora"></div><span class="grow" style="position:relative"><b>${esc(sl.text)}</b></span>${safeLink(sl.link)?`<a class="link" href="${esc(sl.link)}" target="_blank" rel="noopener">${tx('core.promo_slot.more')}</a>`:''}</div>`}
 /* Interface texts for the lead bonus feature (translation keys from the spec).
    promo.lead_bonus.* = promo layer, hidden when the programme is off; core.* = always on, two variants where the spec asks for them. */
 const TXT={
@@ -533,14 +534,16 @@ function bonusLine(d){
   if(d.bonus){const b=d.bonus;const lab=tx('promo.lead_bonus.status.'+b.status);const k={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
     return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}${b.starter?tx('promo.lead_bonus.starter_suffix'):''}</b><span class="muted">${tx('promo.lead_bonus.line.'+(b.status==='cancelled'&&b.deducted?'cancelled_deducted':b.status),{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
   if(d.bonusSkip)return `<div class="brow"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.'+d.bonusSkip)}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
-  if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.pending',{n:qLeft(d)})}</span></span><span class="serif num" style="font-size:20px">${aed(BONUS)}</span></div>`;
+  if(d.q&&!d.q.done&&!expectedBonus(d))return d.bonusEligible===false?`<div class="brow"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.not_eligible')}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`:'';
+  if(d.q&&!d.q.done&&expectedBonus(d).skip)return `<div class="brow"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.limit')}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
+  if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.pending',{n:qLeft(d)})}</span></span><span class="serif num" style="font-size:20px">${aed(expectedBonus(d).amt)}</span></div>`;
   return '';
 }
 function attention(){
   const out=[];
   S.deals.forEach(d=>{
     if(d.status==='active'&&d.q&&!d.q.done&&!d.q.consent)out.push({d,k:'warn',chg:1,t:`${esc(d.first)} hasn't confirmed consent yet`,s:`Ask ${esc(d.first)} to open the link from Lenty. ${qLeft(d)} days left to qualify.`});
-    if(d.status==='active'&&d.q&&!d.q.done&&d.q.consent)out.push({d,k:'info',chg:1,t:`${esc(d.first)}: qualification ${qDone(d)} of 4`,s:`Documents and a call with the advisor left.${PROMO?' '+tx('promo.lead_bonus.attention_suffix',{bonusAed:aed(BONUS)}):''}`});
+    if(d.status==='active'&&d.q&&!d.q.done&&d.q.consent)out.push({d,k:'info',chg:1,t:`${esc(d.first)}: qualification ${qDone(d)} of 4`,s:`Documents and a call with the advisor left.${(()=>{const e=PROMO&&expectedBonus(d);return e&&e.amt?' '+tx('promo.lead_bonus.attention_suffix',{bonusAed:aed(e.amt)}):''})()}`});
     if(d.status==='active'&&d.stage>0&&d.stage<=3&&d.docs<6)out.push({d,k:'warn',t:`${esc(d.first)} still needs ${6-d.docs} document${6-d.docs>1?'s':''}`,s:'Send the upload link so the file is not delayed.'});
     if(d.status==='active'&&d.stage===5)out.push({d,k:'info',t:`Waiting for the developer NOC for ${esc(d.first)}`,s:'Lenty legal is chasing it. Usually 3–5 working days.'});
     if(d.status==='active'&&(d.stage===3||d.stage===4))out.push({d,k:'good',t:`${esc(d.first)} is pre-approved`,s:`Show properties up to ${short(d.price)}.`});
@@ -791,7 +794,7 @@ done(){
     <div style="width:72px;height:72px;border-radius:24px;background:var(--cream);color:var(--ink);display:grid;place-items:center">${I.checkLg}</div>
     <h1 class="serif" style="font-size:34px;line-height:1.1;margin:0">${esc(d.first)} is with Lenty now.</h1>
     <div class="stack g12">
-      ${[['Now',`We've sent ${esc(d.first)} a link to confirm consent. Next step: documents.`,1],['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 14 days',PROMO?tx('core.done.qualification.with_bonus',{bonusAed:aed(BONUS)}):tx('core.done.qualification.no_bonus'),2],['45 days after disbursal',`${aed(comm(d))} commission paid to you`]].map(([t,s,c])=>`<div ${c?'data-chg="'+c+'"':''} class="row" style="align-items:flex-start;gap:14px;border-radius:12px;margin:-4px -8px;padding:4px 8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
+      ${[['Now',`We've sent ${esc(d.first)} a link to confirm consent. Next step: documents.`,1],['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 14 days',(()=>{const e=PROMO&&expectedBonus(d);return e&&e.amt?tx('core.done.qualification.with_bonus',{bonusAed:aed(e.amt)}):tx('core.done.qualification.no_bonus')})(),2],['45 days after disbursal',`${aed(comm(d))} commission paid to you`]].map(([t,s,c])=>`<div ${c?'data-chg="'+c+'"':''} class="row" style="align-items:flex-start;gap:14px;border-radius:12px;margin:-4px -8px;padding:4px 8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
     </div>
     <div class="stack g10" style="margin-top:6px"><button class="btn btn-white" onclick="go('deal',{id:'${d.id}'})">Open deal</button><button class="btn" style="color:var(--cream)" onclick="go('today')">Back to Today</button></div>
   </div></div>`;
@@ -1069,7 +1072,8 @@ function submitRefer(){
 /* spec: duplicates never promise lead protection and never reveal who referred the client */
 function dupText(d){return d.q&&d.q.dupOwn?tx('core.duplicate.own',{client:d.first,date:date(d.q.dupDate||d.createdAt)}):tx('core.duplicate.other')}
 const TEAM_KEY='lenty-team-v1.02'; /* demo leads of other agents (consultant page), same browser */
-const phoneKey=(cc,ph)=>String((cc||'')+(ph||'')).replace(/\D/g,'');
+/* one format for phone duplicates: +971 / 050 123 4567, 971501234567 and 00971 50 123 4567 are the same number */
+function phoneKey(cc,ph){const c=String(cc||'').replace(/\D/g,'');let p=String(ph||'').replace(/\D/g,'');if(p.startsWith('00'))p=p.slice(2);if(c&&p.startsWith(c)&&p.length>c.length+6)p=p.slice(c.length);p=p.replace(/^0+/,'');return p?c+p:''}
 /* Monthly counter and "new agent" from the agent's own data (spec: bonuses created this month count towards the limit, starters included).
    Sample deals are for exploring the app and never count. */
 const sameMonth=t=>{if(!t)return false;const a=new Date(t),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()};
@@ -1077,12 +1081,19 @@ const realDeals=()=>(S.deals||[]).filter(d=>!d.sample);
 function paidLeadsThisMonth(){return realDeals().filter(d=>d.bonus&&d.bonus.status!=='cancelled'&&sameMonth(d.bonus.at)).length}
 function isNewAgent(){if(!ADMIN.starter_bonus_enabled)return false;const ds=realDeals();return ds.filter(d=>d.q&&d.q.done).length<STARTER_N&&ds.filter(d=>d.bonus&&d.bonus.starter&&d.bonus.status!=='cancelled').length<STARTER_N}
 /* screen previews keep their ?starter=1 / ?limit=1 switches; the live app uses the agent's real numbers */
+/* What a pending lead can still earn, by the terms fixed when it was submitted. The final decision is made at qualification. */
+function expectedBonus(d){
+  if(d.bonus||d.bonusSkip||d.bonusEligible===false)return null;
+  if(limitReached())return {skip:'limit'};
+  const t=d.terms||{},starterOn=t.starterEnabled!==false;
+  return {amt:starterOn&&starterBanner()?(t.starter||STARTER):(t.bonus||BONUS)};
+}
 function starterBanner(){return PREVIEW?!!tmp.starter:isNewAgent()}
 function limitReached(){return PREVIEW?!!tmp.limit:paidLeadsThisMonth()>=LIMIT}
 function findDuplicate(d){
   /* same rule as consultant.html: only an earlier lead (within 90 days before this one) makes this one a duplicate; leads already rejected as duplicates don't count */
   const at=d.createdAt||Date.now(),pk=phoneKey(d.cc,d.phone),em=(d.email||'').trim().toLowerCase(),eid=String((d.q&&d.q.eid)||'').replace(/\D/g,'');
-  let others=(S.deals||[]).filter(x=>x.id!==d.id);
+  let others=(S.deals||[]).filter(x=>x.id!==d.id&&!x.sample);
   try{const t=JSON.parse(localStorage.getItem(TEAM_KEY)||'null');if(t&&Array.isArray(t.leads))others=others.concat(t.leads)}catch(e){}
   return others.find(x=>{const xa=x.createdAt||0;if(xa>=at||xa<at-90*DAY||(x.q&&x.q.reason==='duplicate'))return false;
     return (eid&&String((x.q&&x.q.eid)||'').replace(/\D/g,'')===eid)||(pk&&phoneKey(x.cc,x.phone)===pk)||(em&&(x.email||'').trim().toLowerCase()===em)})||null;

@@ -186,6 +186,8 @@ const TXT={
   "team.assess.dbr":"DBR {dbr}% of 50%","team.assess.min_down":"Down payment below the {min}% minimum for {res}",
   "team.docs.passport":"Passport","team.docs.eid":"Emirates ID (or visa for a non-resident)","team.docs.income":"Salary certificate or proof of income",
   "team.docs.mark":"Documents received","team.docs.eid_no":"Emirates ID number (checked for duplicates)",
+  "team.toast.not_open":"This lead can't be confirmed any more: it was decided elsewhere or its 14 days are over.",
+  "team.risk.eid_duplicate":"Same Emirates ID as an earlier lead",
   "team.toast.duplicate":"Duplicate client: {client} matches {other} ({by}). Rejected automatically.","team.docs.done":"Documents received {date}",
   "team.notes":"Notes from the call","team.notes_ph":"Intent to buy, timeline, anything the bank should know",
   "team.confirm":"Confirm qualification","team.reject":"Reject","team.reject_reason":"Reason","team.reject_pick":"Choose a reason","team.reject_go":"Reject lead","team.cancel":"Cancel",
@@ -214,7 +216,7 @@ const TXT={
   "agent.msg.duplicate_other":"This client is already registered with Lenty, so this lead doesn't earn a bonus and isn't protected.",
   "agent.msg.expired":"Not qualified within 14 days. The lead expired.",
 };
-function tx(k,v={}){const s=TXT[k];if(s==null)return k;return s.replace(/\{(\w+)\}/g,(m,n)=>n in v?v[n]:m)}
+function tx(k,v={}){const s=TXT[k];if(s==null)return esc(k);return s.replace(/\{(\w+)\}/g,(m,n)=>n in v?v[n]:m)}
 
 /* ===================== Reference data ===================== */
 const ADVISORS=[{id:'a1',n:'Elena Petrenko'},{id:'a2',n:'Amira Haddad'},{id:'a3',n:'Farhan Qureshi'},{id:'a4',n:'Daniel Okafor'},{id:'a5',n:'Sofia Lindqvist'},{id:'a6',n:'Omar Saleh'}];
@@ -273,7 +275,7 @@ function agentStore(){return load(AGENT_KEY)}
 function myAgent(){const s=agentStore();const u=s&&s.user;return u?{name:(u.first+' '+(u.last||'')).trim(),agency:u.agency||''}:null}
 function allLeads(){
   const out=[];const s=agentStore();
-  if(s&&s.user&&Array.isArray(s.deals))s.deals.filter(d=>d.q).forEach(d=>out.push(Object.assign({},d,{src:'agent',agent:'me',source:d.source||(d.viaLink?'agent_link':'agent_form'),riskFlags:d.riskFlags||[]})));
+  if(s&&s.user&&Array.isArray(s.deals))s.deals.filter(d=>d.q&&!d.sample).forEach(d=>out.push(Object.assign({},d,{src:'agent',agent:'me',source:d.source||(d.viaLink?'agent_link':'agent_form'),riskFlags:d.riskFlags||[]})));
   team().leads.forEach(l=>out.push(Object.assign({},l,{src:'team'})));
   return out;
 }
@@ -281,10 +283,10 @@ function agentInfo(id){if(id==='me'){const m=myAgent()||{name:'You (agent app)',
 /* Agent statistics: base numbers (demo history) + leads in this prototype; the agent app's sample deals never count */
 function agentStats(id,exceptId){
   const a=agentInfo(id),b=a.base;const ls=allLeads().filter(l=>l.agent===id&&l.id!==exceptId&&!l.sample);
-  const st={qualifiedTotal:b.qualifiedTotal+ls.filter(l=>l.q&&l.q.done).length,
+  const st={qualifiedTotal:b.qualifiedTotal+ls.filter(l=>l.q&&l.q.done&&!l.q.reason).length,
     starterUsed:b.starterUsed+ls.filter(l=>l.bonus&&l.bonus.starter&&l.bonus.status!=='cancelled').length,
     monthBonuses:b.monthBonuses+ls.filter(l=>l.bonus&&l.bonus.status!=='cancelled'&&sameMonth(l.bonus.at)).length,
-    monthQualified:b.monthQualified+ls.filter(l=>l.q&&l.q.done&&sameMonth(l.q.at)).length,
+    monthQualified:b.monthQualified+ls.filter(l=>l.q&&l.q.done&&!l.q.reason&&sameMonth(l.q.at)).length,
     monthRejected:b.monthRejected+ls.filter(l=>l.q&&l.q.rejectedAt&&sameMonth(l.q.rejectedAt)).length};
   const dec=st.monthQualified+st.monthRejected;st.rejectPct=dec?Math.round(st.monthRejected/dec*100):0;st.suspended=dec>0&&st.monthRejected/dec>0.5;
   st.isNew=SETTINGS.starter_bonus_enabled&&st.starterUsed<SETTINGS.starter_bonus_count&&st.qualifiedTotal<SETTINGS.starter_bonus_count;
@@ -313,25 +315,35 @@ function state(l){
   return 'in_qualification';
 }
 const digits=v=>String(v||'').replace(/\D/g,'');
+/* one format for phone duplicates: +971 / 050 123 4567, 971501234567 and 00971 50 123 4567 are the same number */
+function normPhone(cc,ph){const c=digits(cc);let p=digits(ph);if(p.startsWith('00'))p=p.slice(2);if(c&&p.startsWith(c)&&p.length>c.length+6)p=p.slice(c.length);p=p.replace(/^0+/,'');return p?c+p:''}
 function findDuplicate(l){
-  const pk=digits((l.cc||'')+(l.phone||'')),em=(l.email||'').trim().toLowerCase(),eid=digits(l.q&&l.q.eid);
+  const pk=normPhone(l.cc,l.phone),em=(l.email||'').trim().toLowerCase(),eid=digits(l.q&&l.q.eid);
   /* only an earlier lead (within 90 days before this one) makes this one a duplicate; leads already rejected as duplicates don't count */
   const at=l.createdAt||Date.now();
   for(const x of allLeads()){const xa=x.createdAt||0;if(x.id===l.id||xa>=at||xa<at-90*DAY||(x.q&&x.q.reason==='duplicate'))continue;
     if(eid&&digits(x.q&&x.q.eid)===eid)return {lead:x,by:'Emirates ID'};
-    if(pk&&digits((x.cc||'')+(x.phone||''))===pk)return {lead:x,by:'phone'};
+    if(pk&&normPhone(x.cc,x.phone)===pk)return {lead:x,by:'phone'};
     if(em&&(x.email||'').trim().toLowerCase()===em)return {lead:x,by:'email'}}
   return null}
 /* what the agent is told about a duplicate: no lead protection, and never who referred the client */
 function dupMsg(l,own,at){return own?tx('agent.msg.duplicate_own',{client:l.first,date:new Date(at||l.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}):tx('agent.msg.duplicate_other')}
+/* a later lead with the same Emirates ID is a duplicate of this one: open leads are rejected, already qualified ones get a risk flag for the admin */
+function newerSameEid(l,eid){const e=digits(eid),at=l.createdAt||0;
+  allLeads().forEach(x=>{if(x.id===l.id||!(x.createdAt>at)||x.createdAt>at+90*DAY||digits(x.q&&x.q.eid)!==e||(x.q&&x.q.reason))return;
+    const own=x.agent===l.agent;
+    if(openForDecision(x))mutate(x.src,x.id,d=>{if(!openForDecision(d))return false;d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=Date.now();d.q.auto=true;d.q.by=ui.me;d.q.dupOwn=own;if(own)d.q.dupDate=l.createdAt},dupMsg(x,own,l.createdAt));
+    else if(x.q&&x.q.done)mutate(x.src,x.id,d=>{d.riskFlags=Array.from(new Set([...(d.riskFlags||[]),'eid_duplicate']))})})}
+function openForDecision(l){return l.status==='active'&&!l.q.done&&!l.q.reason&&Date.now()<=l.q.deadline}
 function ready(l){const q=l.q;return q.consent&&(q.assess==='yes'||q.assess==='borderline')&&q.docs}
 function decideBy(l){const q=l.q;if(!ready(l))return null;return addWorkingDays(Math.max(q.consentAt||0,q.docsAt||0,q.assessAt||0,l.createdAt),SETTINGS.decision_working_days)}
 
 /* Writes go back to the store the lead came from; the agent app sees its own leads change */
 function mutate(src,id,fn,agentMsg){
   const now=Date.now();
-  if(src==='agent'){const s=agentStore();const d=s&&s.deals.find(x=>x.id===id);if(!d)return;fn(d);if(agentMsg){d.updates=d.updates||[];d.updates.push({at:now,t:agentMsg})}store(AGENT_KEY,s)}
-  else{const t=team();const l=t.leads.find(x=>x.id===id);if(!l)return;fn(l);if(agentMsg){l.log=l.log||[];l.log.push({at:now,t:agentMsg})}store(TEAM_KEY,t)}
+  if(src==='agent'){const s=agentStore();const d=s&&s.deals.find(x=>x.id===id);if(!d)return false;if(fn(d)===false)return false;if(agentMsg){d.updates=d.updates||[];d.updates.push({at:now,t:agentMsg})}store(AGENT_KEY,s)}
+  else{const t=team();const l=t.leads.find(x=>x.id===id);if(!l)return false;if(fn(l)===false)return false;if(agentMsg){l.log=l.log||[];l.log.push({at:now,t:agentMsg})}store(TEAM_KEY,t)}
+  return true;
 }
 /* Daily job from the spec: leads without a decision by the deadline become expired (runs on open and every minute here) */
 function expireAll(){
@@ -399,7 +411,7 @@ function leadCard(l){
   const out=open?decideBonus(l):null;
   const kind=b=>tx(b.starter?'team.kind.starter':'team.kind.regular');
   const outcome=!out?'':out.skip?tx('team.outcome.'+out.skip,{agent:esc(a.name),limit:SETTINGS.monthly_limit}):tx('team.outcome.'+out.bonus.status,{amount:aed(out.bonus.amt),kind:kind(out.bonus),agent:esc(a.name),why:out.bonus.why?tx('team.why.'+out.bonus.why):''});
-  const result=s==='qualified'?tx('team.result.qualified',{date:dt(q.at),by:adv(q.by)}):s==='rejected'?tx('team.result.rejected',{date:dt(q.rejectedAt||l.createdAt),reason:REASONS[q.reason]||q.reason}):s==='expired'?tx('team.result.expired',{date:dt(q.expiredAt||q.deadline)}):'';
+  const result=s==='qualified'?tx('team.result.qualified',{date:dt(q.at),by:adv(q.by)}):s==='rejected'?tx('team.result.rejected',{date:dt(q.rejectedAt||l.createdAt),reason:REASONS[q.reason]||esc(q.reason)}):s==='expired'?tx('team.result.expired',{date:dt(q.expiredAt||q.deadline)}):'';
   const bonusNow=l.bonus?`${aed(l.bonus.amt)} ${kind(l.bonus)} bonus · ${{on_hold:'On review',accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'}[l.bonus.status]}`:l.bonusSkip?{limit:'No bonus: monthly limit',not_eligible:'No bonus: programme was off'}[l.bonusSkip]:'';
   const tb=decideBy(l);
   const log=[...(l.updates||[]),...(l.log||[])].sort((x,y)=>y.at-x.at).slice(0,8);
@@ -478,17 +490,19 @@ async function act(a,l){
     const dup=findDuplicate(Object.assign({},l,{q:Object.assign({},l.q,{eid})}));
     if(dup){const own=dup.lead.agent===l.agent;mutate(src,id,d=>{d.q.eid=eid;d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.q.by=ui.me;d.q.dupOwn=own;if(own)d.q.dupDate=dup.lead.createdAt},dupMsg(l,own,dup.lead.createdAt));
       delete ui.docs[id];toast(tx('team.toast.duplicate',{client:cl,other:dup.lead.first+' '+(dup.lead.last||''),by:dup.by}));render();return}
-    mutate(src,id,d=>{d.q.docs=true;d.q.docsAt=now;d.q.docsBy=ui.me;if(eid)d.q.eid=eid},tx('agent.msg.docs',{client:cl}));delete ui.docs[id];toast(tx('team.toast.docs',{client:cl}))}
+    mutate(src,id,d=>{d.q.docs=true;d.q.docsAt=now;d.q.docsBy=ui.me;if(eid)d.q.eid=eid},tx('agent.msg.docs',{client:cl}));delete ui.docs[id];toast(tx('team.toast.docs',{client:cl}));
+    if(digits(eid))newerSameEid(l,eid)}
   if(a==='reject'){ui.reject=true;ui.reason='';render();return}
   if(a==='reject-cancel'){ui.reject=false;render();return}
   if(a==='reject-go'){const r=ui.reason;if(!r)return;
     if(r==='duplicate'){const m=findDuplicate(l),own=!!(m&&m.lead.agent===l.agent);mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me;d.q.dupOwn=own;if(own)d.q.dupDate=m.lead.createdAt},dupMsg(l,own,m&&m.lead.createdAt))}
     else mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS[r]}));ui.reject=false;toast(tx('team.toast.rejected',{client:cl,reason:REASONS[r]}))}
   if(a==='confirm'){
-    const fresh=allLeads().find(x=>x.id===id);if(!fresh||!ready(fresh))return;
+    const fresh=allLeads().find(x=>x.id===id);
+    if(!fresh||!ready(fresh)||!openForDecision(fresh)){if(fresh&&Date.now()>fresh.q.deadline)expireAll();toast(tx('team.toast.not_open'));render();return}
     const res=decideBonus(fresh);const k=b=>tx(b.starter?'team.kind.starter':'team.kind.regular');
     let msg;if(res.skip)msg=tx('agent.msg.qualified.'+res.skip);else msg=tx('agent.msg.qualified.'+res.bonus.status,{amount:aed(res.bonus.amt),kind:k(res.bonus)});
-    mutate(src,id,d=>{d.q.call=true;d.q.done=true;d.q.at=now;d.q.by=ui.me;d.stage=1;if(res.bonus){d.bonus={amt:res.bonus.amt,starter:res.bonus.starter,status:res.bonus.status,at:now}}else d.bonusSkip=res.skip},msg);
+    mutate(src,id,d=>{if(!openForDecision(d))return false;d.q.call=true;d.q.done=true;d.q.at=now;d.q.by=ui.me;d.stage=1;if(res.bonus){d.bonus={amt:res.bonus.amt,starter:res.bonus.starter,status:res.bonus.status,at:now}}else d.bonusSkip=res.skip},msg);
     toast(tx('team.toast.qualified',{client:cl,bonus:res.skip?tx('team.outcome.'+res.skip,{agent:agentInfo(l.agent).name,limit:SETTINGS.monthly_limit}):tx('team.outcome.'+res.bonus.status,{amount:aed(res.bonus.amt),kind:k(res.bonus),agent:agentInfo(l.agent).name,why:res.bonus.why?tx('team.why.'+res.bonus.why):''})}));
   }
   render();
@@ -521,6 +535,7 @@ Object.assign(TXT,{
   "admin.risk":"Risk review","admin.risk_sub":"Leads with risk flags and agents whose bonuses are suspended. Their bonuses wait on review until you approve or cancel them.",
   "admin.risk_none":"No risk flags.","admin.reject_fraud":"Reject lead as fraud","admin.suspended":"{name}: {pct}% of this month's decisions were rejections. New bonuses go on review.",
   "admin.demo":"Demo data","admin.demo_sub":"Resets everything in this browser: admin settings, demo leads of other agents, and the agent account with its leads.",
+  "admin.bad_link":"Use a full https:// link for the promo slot.",
   "admin.reset":"Reset demo data","admin.reset_confirm":"Reset all demo data in this browser? This can't be undone.","admin.reset_go":"Yes, reset everything",
   "agent.msg.fraud_bonus_cancelled":"Lead bonus of {amount} cancelled.",
   "agent.msg.fraud_bonus_deducted":"Lead bonus of {amount} cancelled and will be deducted from your next payouts.",
@@ -534,6 +549,7 @@ const FRAUD_REASONS=['fake','own','dup'];
 const dubai=(t,o)=>new Date(t).toLocaleDateString('en-GB',Object.assign({timeZone:'Asia/Dubai',day:'numeric',month:'short',year:'numeric'},o));
 const toDateInput=t=>{if(!t)return '';const d=new Date(t+4*36e5);return d.toISOString().slice(0,10)};           /* Dubai = UTC+4 */
 const fromDateInput=v=>{if(!v)return null;const [y,m,d]=v.split('-').map(Number);return Date.UTC(y,m-1,d)-4*36e5};
+function safeLink(v){try{const u=new URL(v);return u.protocol==='https:'}catch(e){return false}}
 function saveAdmin(patch){const a=Object.assign(loadAdmin(),patch);store(ADMIN_KEY,a);applyAdmin()}
 function programmeState(){const a=ADMIN,now=Date.now();
   if(!a.lead_bonus_enabled)return ['grey',tx('admin.state.off')];
@@ -541,7 +557,7 @@ function programmeState(){const a=ADMIN,now=Date.now();
   if(a.lead_bonus_ends_at&&now>=a.lead_bonus_ends_at)return ['bad',tx('admin.state.ended',{date:dubai(a.lead_bonus_ends_at-1)})];
   return ['good',a.lead_bonus_ends_at?tx('admin.state.active',{date:dubai(a.lead_bonus_ends_at-1)}):tx('admin.state.active_open')]}
 function bonuses(){return allLeads().filter(l=>l.bonus).map(l=>({l,b:l.bonus,a:agentInfo(l.agent)})).sort((x,y)=>(y.b.at||0)-(x.b.at||0))}
-function windowLeft(b){const from=b.approvedAt||b.at;return Math.ceil((from+SETTINGS.cancel_window_days*DAY-Date.now())/DAY)}
+function windowLeft(b){if(b.status==='on_hold')return Infinity;const from=b.approvedAt||b.at;return Math.ceil((from+SETTINGS.cancel_window_days*DAY-Date.now())/DAY)}
 const STATUS_TXT={on_hold:'On review',accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'},STATUS_CLS={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'};
 function filteredBonuses(){const f=ui.bf;return bonuses().filter(x=>(f.agent==='all'||x.l.agent===f.agent)&&(f.status==='all'||x.b.status===f.status)&&(f.period==='all'||sameMonth(x.b.at)))}
 function renderAdmin(){
@@ -601,7 +617,7 @@ function renderAdmin(){
 }
 function bonusRow(x){const {l,b,a}=x,key=l.src+'|'+l.id,left=windowLeft(b),canCancel=b.status!=='cancelled'&&left>0;
   const acts=b.status==='cancelled'?`<span class="small muted">${esc(b.cancelReason||'')}${b.deducted?' · deducted':''}</span>`:
-    `${b.status==='on_hold'?`<button class="btn btn-accent" data-approve="${key}">${tx('admin.approve')}</button>`:''}${canCancel?`<button class="btn btn-bad" data-cancel="${key}">${tx('admin.cancel')}</button><span class="small muted">${tx('admin.window_left',{n:left})}</span>`:`<span class="small muted">${tx('admin.window_closed')}</span>`}`;
+    `${b.status==='on_hold'&&!(l.q&&l.q.reason)?`<button class="btn btn-accent" data-approve="${key}">${tx('admin.approve')}</button>`:''}${canCancel?`<button class="btn btn-bad" data-cancel="${key}">${tx('admin.cancel')}</button><span class="small muted">${left===Infinity?'':tx('admin.window_left',{n:left})}</span>`:`<span class="small muted">${tx('admin.window_closed')}</span>`}`;
   const form=ui.cancel===key?`<div class="brow2" style="background:var(--bad-soft)"><span style="grid-column:1/-1" class="row">
       <span class="f"><label for="cx_reason">${tx('admin.cancel_reason')}</label><select id="cx_reason">${FRAUD_REASONS.map(r=>`<option value="${r}">${tx('admin.fraud.'+r)}</option>`).join('')}</select></span>
       <span class="f" style="flex:1;min-width:200px"><label for="cx_note">${tx('admin.cancel_note')}</label><input id="cx_note"></span>
@@ -614,19 +630,19 @@ function bindAdmin(){
   const on=(id,ev,fn)=>{const e=document.getElementById(id);if(e)e.addEventListener(ev,fn)};
   on('ad_enabled','click',()=>{saveAdmin({lead_bonus_enabled:!ADMIN.lead_bonus_enabled});toast(tx('admin.saved'));render()});
   on('ad_starter','click',()=>{saveAdmin({starter_bonus_enabled:!ADMIN.starter_bonus_enabled});toast(tx('admin.saved'));render()});
-  on('ad_save_prog','click',()=>{saveAdmin({lead_bonus_starts_at:fromDateInput($('#ad_starts').value),lead_bonus_ends_at:fromDateInput($('#ad_ends').value),
+  on('ad_save_prog','click',()=>{const link=$('#ad_slot_link').value.trim();if(link&&!safeLink(link)){toast(tx('admin.bad_link'));return}saveAdmin({lead_bonus_starts_at:fromDateInput($('#ad_starts').value),lead_bonus_ends_at:fromDateInput($('#ad_ends').value),
     promo_slot:{text:$('#ad_slot_text').value.trim(),link:$('#ad_slot_link').value.trim(),from:fromDateInput($('#ad_slot_from').value),to:fromDateInput($('#ad_slot_to').value)}});toast(tx('admin.saved'));render()});
   on('ad_save_set','click',()=>{const v=id=>Math.max(0,num($('#'+id).value));saveAdmin({bonus_amount_aed:v('ad_bonus'),starter_bonus_amount_aed:v('ad_starter_amt'),starter_bonus_count:v('ad_starter_n'),monthly_limit:v('ad_limit'),cancel_window_days:v('ad_window')});toast(tx('admin.saved'));render()});
   ['agent','status','period'].forEach(k=>on('bf_'+k,'change',e=>{ui.bf[k]=e.target.value;render()}));
   on('ad_pay','click',()=>{ui.payConfirm=true;render()});on('ad_pay_no','click',()=>{ui.payConfirm=false;render()});
   on('ad_pay_go','click',()=>{const acc=bonuses().filter(x=>x.b.status==='accrued');const now=Date.now();let sum=0;
-    acc.forEach(x=>{sum+=x.b.amt;mutate(x.l.src,x.l.id,d=>{d.bonus.status='paid';d.bonus.paidAt=now},tx('agent.msg.bonus_paid',{amount:aed(x.b.amt)}))});
+    acc.forEach(x=>{sum+=x.b.amt;mutate(x.l.src,x.l.id,d=>{if(!d.bonus||d.bonus.status!=='accrued')return false;d.bonus.status='paid';d.bonus.paidAt=now},tx('agent.msg.bonus_paid',{amount:aed(x.b.amt)}))});
     ui.payConfirm=false;toast(tx('admin.payout_done',{n:acc.length,sum:aed(sum)}));render()});
   on('ad_csv','click',exportCsv);
   on('ad_reset','click',()=>{ui.resetConfirm=true;render()});on('ad_reset_no','click',()=>{ui.resetConfirm=false;render()});
   on('ad_reset_go','click',()=>{[AGENT_KEY,TEAM_KEY,ADMIN_KEY,'lenty-team-me'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});ui.resetConfirm=false;ui.sel=null;applyAdmin();team();expireAll();render();toast('Demo data reset')});
   document.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>{const [src,id]=b.dataset.approve.split('|');const l=allLeads().find(x=>x.id===id);
-    mutate(src,id,d=>{d.bonus.status='accrued';d.bonus.approvedAt=Date.now()},tx('agent.msg.bonus_approved',{amount:aed(l.bonus.amt)}));toast('Bonus approved');render()}));
+    mutate(src,id,d=>{if(!d.bonus||d.bonus.status!=='on_hold'||(d.q&&d.q.reason))return false;d.bonus.status='accrued';d.bonus.approvedAt=Date.now()},tx('agent.msg.bonus_approved',{amount:aed(l.bonus.amt)}));toast('Bonus approved');render()}));
   document.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',()=>{ui.cancel=b.dataset.cancel;render()}));
   on('cx_no','click',()=>{ui.cancel=null;render()});
   on('cx_go','click',e=>{const [src,id]=e.currentTarget.dataset.key.split('|');const l=allLeads().find(x=>x.id===id);const reason=tx('admin.fraud.'+$('#cx_reason').value),note=$('#cx_note').value.trim();const wasPaid=l.bonus.status==='paid';
@@ -643,7 +659,7 @@ function exportCsv(){
   const rows=[['lead_id','agent','agency','client','amount_aed','is_starter','status','created_at','approved_at','paid_at','cancelled_at','cancel_reason','deducted']];
   const iso=t=>t?new Date(t).toISOString():'';
   filteredBonuses().forEach(({l,b,a})=>rows.push([l.id,a.name,a.agency,(l.first+' '+(l.last||'')).trim(),b.amt,b.starter?'yes':'no',b.status,iso(b.at),iso(b.approvedAt),iso(b.paidAt),iso(b.cancelledAt),b.cancelReason||'',b.deducted?'yes':'no']));
-  const csv=rows.map(r=>r.map(v=>{v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n');
+  const csv=rows.map(r=>r.map(v=>{v=String(v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n');
   try{const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='lenty-lead-bonuses-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(`CSV with ${rows.length-1} bonuses downloaded`)}
   catch(e){toast('Download is not available here')}
   window.__lastCsv=csv;
