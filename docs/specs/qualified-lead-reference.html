@@ -1,11 +1,21 @@
 <!doctype html>
+<!--
+  Lenty Partners v1.02 — REFERENCE PROTOTYPE for docs/specs/qualified-lead.md
+  Visual and behavioural reference only. Not production code. If this file and the spec disagree, the spec wins.
+  Preview a single screen with query params:
+    ?screen=refer&step=1|2|3      submission steps (add &starter=1 for the new-agent banner, &limit=1 for monthly limit reached)
+    ?screen=done                  referral sent
+    ?screen=today | deals | wallet | link | agreement&agree=1
+    ?screen=deal&deal=yusuf|maria|olena|ahmed|chloe|khalid
+    &sheet=how | updates | agreement   open a sheet on top
+    &promo=0                      lead-bonus programme switched off (core qualification stays)
+    &mark=1                       outline every element that changed versus v1.01
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lenty Partners v1.0</title>
-<link rel="icon" href="../icon.svg">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<title>Lenty Partners</title>
 <meta name="theme-color" content="#002c1f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prata&display=swap" rel="stylesheet">
@@ -220,6 +230,22 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tool + .tool{border-top:1px solid var(--line-2)}
 .tool .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-ink);flex:none}
 .sample{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);color:var(--accent-ink);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.45}
+html.mark [data-chg]{outline:2px dashed #6d4aff;outline-offset:3px;position:relative}
+html.mark .item[data-chg],html.mark .brow[data-chg]{outline-offset:-2px}
+html.mark .kv[data-chg]::after{right:auto!important;left:-14px}
+html.mark .bonusbar[data-chg]::after{top:6px;right:6px}
+html.mark .item[data-chg]::after{top:6px!important;right:6px!important}
+html.mark [data-chg]::after{content:attr(data-chg);position:absolute;top:-10px;right:-8px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#6d4aff;color:#fff;font:700 11px/20px Inter,system-ui,sans-serif;text-align:center;z-index:6;pointer-events:none;box-shadow:0 2px 6px rgba(60,30,180,.35)}
+.bonusbar{border-radius:18px;background:var(--ink);color:#fff;padding:14px 16px;display:flex;gap:12px;align-items:center;position:relative;overflow:hidden}
+.bonusbar .aurora{opacity:.35}
+.bonusbar b{font-family:var(--display);font-weight:400;color:var(--cream);font-size:17px;line-height:1.25;position:relative;display:block}
+.bonusbar .link{color:var(--cream);position:relative;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+.qlist{display:flex;flex-direction:column;gap:7px;margin-top:10px;padding:12px;border-radius:14px;background:var(--line-2)}
+.qlist .row{gap:9px;font-size:13.5px}
+.qlist .ok{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--good);color:#fff}
+.qlist .ok svg{width:11px;height:11px}
+.qlist .no{width:18px;height:18px;border-radius:50%;flex:none;border:1.5px solid #c9c4b4;background:var(--card)}
+.brow{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-2)}
 details.demo summary{list-style:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);padding:6px 0;display:flex;align-items:center;gap:6px}
 details.demo summary::-webkit-details-marker{display:none}
 </style>
@@ -241,7 +267,7 @@ details.demo summary::-webkit-details-marker{display:none}
 
 <script>
 /* ================= Icons ================= */
-const LOGO=(h=28)=>`<svg height="${h}" viewBox="140 340 720 290" fill="currentColor" role="img" aria-label="Lenty" style="display:block"><path d="M683 436.5V528C683.5 540.5 682 545 688.5 553C693.013 556.908 695 558 701 559C706 559.833 714.119 560.32 721.069 554.76L723.5 559C715 569 701.332 577.5 687 577.5C671.988 577.5 659.5 571 655 561C651.664 554.05 651.291 546.698 651.291 521.956V436.5H630.5V428C644 425.5 649 422.5 660 412C665.004 404.216 667.5 403.5 671.5 389.5L683 388C682.444 399.398 683 400.202 683 425.5H716V436.5H683Z M509 417.5V446C525 428 539 420 561.5 418.5C579.57 418.5 593.772 424.712 601 437.5C606.004 445.84 609 456.82 609 473.5V533.814C609 558.556 610.5 567 624 568V574.5H562V567C576 566 577.5 558.278 577.5 533.814V473.5C576.5 444 559.5 439.5 548 438.5C538.038 437.634 530 440.848 524 444.5C519 447.543 516.5 449 510 456L509 533.814C509 558.834 513 566.5 525.501 567V573.5H462.501L462.5 567C475.5 566 478 558.556 478 533.814V457C477.5 436.5 470 437.5 461.5 436.5V430L509 417.5Z M448 485.5L345.5 485C345.5 503 344.883 519.726 358 535C368.959 547.761 379.5 553.5 396.5 554.5C415.682 554.5 429.5 548.5 444.5 533L447.669 535.524C433.769 561.934 414.134 577 385.5 577C340.5 579.5 313.951 543.864 313.951 497.438C313.951 450.734 341.744 418.5 384 418.5C412.356 418.5 434.326 431.592 443.5 455.5C446.558 463.84 447.444 467.986 448 485.5ZM346.5 474L416.5 474.5C416.5 460.5 414.364 454.5 412 448C408 437 393.842 429 383 429C371.046 429 358.303 436.343 352 450C349 456.5 347.5 461 346.5 474Z M151 574.5L151.001 567C167.001 565.5 167.001 556.798 167.001 531.5L165.869 393.636C165.5 368.5 162 367 151 364.724L151.001 360H218.001V364.724C205.5 367.5 202.5 369.5 202.009 393.636L201.001 561.5H227.501C251 562 272.5 560.5 281.5 545.5C287.132 536.114 287.501 536.5 293.501 520H300.501L295.501 574.5H151Z M795 430C787.5 430.5 781 434.994 781 442.5C781 446.67 783.664 455.104 787 464L817.5 542.5L843.5 475.5C847.114 466.326 853.5 450.782 853.5 445.5C853.5 434.102 852.5 431.5 841 430V424.5H884V430C870.5 432 867.51 445.586 855 477L804 605.854C792.602 634.488 771.5 648 757.5 647.5C748.401 647.825 740.358 644.558 735.705 639.212L742.093 621.523C747.854 621.644 753.277 622.193 755.5 622C767 621 772 618 775 616.5C784 612 791.868 602.24 797.15 589.452L801.32 578.332L752.67 462.128C743.218 439.888 739.5 431.5 727 430V424.5H795V430Z"/></svg>`;
+const LOGO=(h=28)=>`<svg height="${h}" viewBox="141 350 753 308" fill="currentColor" role="img" aria-label="Lenty" style="display:block"><path d="M683 436.5V528C683.5 540.5 682 545 688.5 553C693.013 556.908 695 558 701 559C706 559.833 714.119 560.32 721.069 554.76L723.5 559C715 569 701.332 577.5 687 577.5C671.988 577.5 659.5 571 655 561C651.664 554.05 651.291 546.698 651.291 521.956V436.5H630.5V428C644 425.5 649 422.5 660 412C665.004 404.216 667.5 403.5 671.5 389.5L683 388C682.444 399.398 683 400.202 683 425.5H716V436.5H683Z M509 417.5V446C525 428 539 420 561.5 418.5C579.57 418.5 593.772 424.712 601 437.5C606.004 445.84 609 456.82 609 473.5V533.814C609 558.556 610.5 567 624 568V574.5H562V567C576 566 577.5 558.278 577.5 533.814V473.5C576.5 444 559.5 439.5 548 438.5C538.038 437.634 530 440.848 524 444.5C519 447.543 516.5 449 510 456L509 533.814C509 558.834 513 566.5 525.501 567V573.5H462.501L462.5 567C475.5 566 478 558.556 478 533.814V457C477.5 436.5 470 437.5 461.5 436.5V430L509 417.5Z M448 485.5L345.5 485C345.5 503 344.883 519.726 358 535C368.959 547.761 379.5 553.5 396.5 554.5C415.682 554.5 429.5 548.5 444.5 533L447.669 535.524C433.769 561.934 414.134 577 385.5 577C340.5 579.5 313.951 543.864 313.951 497.438C313.951 450.734 341.744 418.5 384 418.5C412.356 418.5 434.326 431.592 443.5 455.5C446.558 463.84 447.444 467.986 448 485.5ZM346.5 474L416.5 474.5C416.5 460.5 414.364 454.5 412 448C408 437 393.842 429 383 429C371.046 429 358.303 436.343 352 450C349 456.5 347.5 461 346.5 474Z M151 574.5L151.001 567C167.001 565.5 167.001 556.798 167.001 531.5L165.869 393.636C165.5 368.5 162 367 151 364.724L151.001 360H218.001V364.724C205.5 367.5 202.5 369.5 202.009 393.636L201.001 561.5H227.501C251 562 272.5 560.5 281.5 545.5C287.132 536.114 287.501 536.5 293.501 520H300.501L295.501 574.5H151Z M795 430C787.5 430.5 781 434.994 781 442.5C781 446.67 783.664 455.104 787 464L817.5 542.5L843.5 475.5C847.114 466.326 853.5 450.782 853.5 445.5C853.5 434.102 852.5 431.5 841 430V424.5H884V430C870.5 432 867.51 445.586 855 477L804 605.854C792.602 634.488 771.5 648 757.5 647.5C748.401 647.825 740.358 644.558 735.705 639.212L742.093 621.523C747.854 621.644 753.277 622.193 755.5 622C767 621 772 618 775 616.5C784 612 791.868 602.24 797.15 589.452L801.32 578.332L752.67 462.128C743.218 439.888 739.5 431.5 727 430V424.5H795V430Z"/></svg>`;
 const sv=(p,w=22,extra='')=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${p}</svg>`;
 const I={
   today:sv('<path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/>'),
@@ -278,6 +304,10 @@ const I={
 
 /* ================= Reference data ================= */
 const RATE=0.003, PAYOUT_DAYS=45, DAY=864e5;
+let PROMO=true;
+const BONUS=100, STARTER=150, STARTER_N=3, LIMIT=10, QDAYS=14;
+const QITEMS=['Consent','Assessment','Documents','Consultant call'];
+const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days'};
 const COUNTRIES=[
   {f:'🇦🇪',c:'+971',n:'United Arab Emirates'},{f:'🇬🇧',c:'+44',n:'United Kingdom'},{f:'🇮🇳',c:'+91',n:'India'},
   {f:'🇸🇦',c:'+966',n:'Saudi Arabia'},{f:'🇺🇦',c:'+380',n:'Ukraine'},{f:'🇷🇺',c:'+7',n:'Russia'},
@@ -294,25 +324,25 @@ const ADVISORS=[
 const LEGAL=[{id:'l1',n:'Mariam Al Suwaidi'},{id:'l2',n:'James Whitford'}];
 const LANGS=['English','Arabic','Russian','Ukrainian','Hindi','Urdu','French','German'];
 const STAGES=[
-  {t:'Discovery call',p:0,eta:'Day 0',d:'15-minute call with your client about goals, residency and income.'},
-  {t:'Bank matching',p:0,eta:'24–48 hrs',d:'Rates pulled from 19 UAE banks; the best 3 are shortlisted.'},
-  {t:'Pre-approval',p:0,eta:'3–5 days',d:'File submitted to the bank most likely to approve at the best rate.'},
-  {t:'Valuation',p:0,eta:'2–4 days',d:'A bank-appointed valuer inspects the property.'},
-  {t:'Final offer letter',p:0,eta:'3–5 days',d:'The bank issues the final offer and your client signs it.'},
-  {t:'Contract & NOC',p:1,eta:'3–7 days',d:'Lenty legal reviews the contract and obtains the developer NOC.'},
-  {t:'Transfer & disbursal',p:1,eta:'1 day',d:'Transfer at the trustee office; the bank releases the loan.'},
-  {t:'Keys',p:2,eta:'Same day',d:'Your client gets the keys.'},
+  {t:'Qualification',p:0,eta:'Up to 14 days',d:'Consent, affordability, documents and a call with your advisor. Your lead bonus is accrued when all four are done.'},
+  {t:'Bank matching',p:1,eta:'24–48 hrs',d:'Rates pulled from 19 UAE banks; the best 3 are shortlisted.'},
+  {t:'Pre-approval',p:1,eta:'3–5 days',d:'File submitted to the bank most likely to approve at the best rate.'},
+  {t:'Valuation',p:1,eta:'2–4 days',d:'A bank-appointed valuer inspects the property.'},
+  {t:'Final offer letter',p:1,eta:'3–5 days',d:'The bank issues the final offer and your client signs it.'},
+  {t:'Contract & NOC',p:2,eta:'3–7 days',d:'Lenty legal reviews the contract and obtains the developer NOC.'},
+  {t:'Transfer & disbursal',p:2,eta:'1 day',d:'Transfer at the trustee office; the bank releases the loan.'},
+  {t:'Keys',p:3,eta:'Same day',d:'Your client gets the keys.'},
 ];
-const PHASES=[['Mortgage','Lenty mortgage advisors'],['Legal','Lenty legal team · free for your client'],['Handover','']];
+const PHASES=[['Qualification','Your lead bonus'],['Mortgage','Lenty mortgage advisors'],['Legal','Lenty legal team · free for your client'],['Handover','']];
 const DOCS=['Passport','UAE visa','Emirates ID','Salary certificate','6-month bank statements','Property MOU / Form F'];
 const TYPES=['Ready apartment','Ready villa / townhouse','Off-plan','Refinance','Buyout','Commercial'];
 const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resident'};
 
 /* ================= State ================= */
-const KEY='lenty-partners-v1.0';
+const KEY='lenty-partners-v1.01';
 const fresh=()=>({user:null,deals:[],notif:{push:true,wa:true,email:false},seen:0});
 let S=(()=>{try{return Object.assign(fresh(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return fresh()}})();
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const tmp={};
 let R={screen:S.user?'today':'welcome',tab:'today',params:{}};
 
@@ -320,15 +350,25 @@ function sampleDeals(){
   const now=Date.now();
   const mk=(o)=>Object.assign({id:'d'+Math.random().toString(36).slice(2,8),cc:'+971',email:'',notes:'',docs:6,status:'active',sample:true,legal:'l1',updates:[]},o);
   return [
+    mk({first:'Maria',last:'Santos',phone:'52 334 1189',type:'Ready apartment',area:'Dubai Marina',price:2400000,loan:1920000,residency:'resident',stage:0,advisor:'a4',docs:0,viaLink:true,createdAt:now-3*36e5,
+        q:{consent:true,method:'form',assess:'borderline',docs:false,call:false,deadline:now-3*36e5+QDAYS*DAY},
+        updates:[{n:1,at:now-3*36e5,t:'Maria signed up through your link and gave consent in the form.'}]}),
     mk({first:'Yusuf',last:'Karim',phone:'55 761 2093',type:'Ready apartment',area:'Downtown Dubai',price:2000000,loan:1600000,residency:'resident',stage:0,advisor:'a6',docs:1,createdAt:now-2*36e5,
-        updates:[{at:now-2*36e5,t:'Referral received. Omar will call Yusuf within 1 hour.'}]}),
+        q:{consent:false,assess:'yes',docs:false,call:false,deadline:now-2*36e5+QDAYS*DAY},
+        updates:[{at:now-2*36e5,t:'Referral received. Omar will call Yusuf within 1 hour.'},{n:1,at:now-1.6*36e5,t:'We sent Yusuf a link to confirm consent.'}]}),
+    mk({first:'Khalid',last:'Al Mansoori',phone:'50 998 2210',type:'Ready villa / townhouse',area:'Mudon',price:3100000,loan:2480000,residency:'resident',stage:0,status:'lost',advisor:'a2',docs:0,createdAt:now-6*DAY,
+        q:{consent:true,assess:'no',docs:false,call:true,reason:'assessment_no'},
+        updates:[{at:now-6*DAY,t:'Referral received.'},{n:1,at:now-5*DAY,t:"Not qualified: doesn't meet affordability. No lead bonus for this client."}]}),
     mk({first:'Olena',last:'Kovalenko',cc:'+380',phone:'67 509 7777',type:'Ready apartment',area:'Jumeirah Village Circle',price:1450000,loan:1160000,residency:'resident',stage:2,advisor:'a1',docs:4,createdAt:now-4*DAY,
-        updates:[{at:now-4*DAY,t:'Referral received.'},{at:now-3.8*DAY,t:'Discovery call done. Salaried, 6 years in UAE.'},{at:now-2*DAY,t:'3 banks shortlisted. Best fixed rate 3.79%.'},{at:now-1*DAY,t:'Pre-approval file sent to the bank. Waiting for 2 documents.'}]}),
+        q:{done:true,at:now-3.7*DAY},bonus:{amt:STARTER,starter:true,status:'accrued',at:now-3.7*DAY},
+        updates:[{at:now-4*DAY,t:'Referral received.'},{at:now-3.8*DAY,t:'Discovery call done. Salaried, 6 years in UAE.'},{n:1,at:now-3.7*DAY,t:'Qualified. AED 150 starter bonus accrued, paid with your next weekly payout.'},{at:now-2*DAY,t:'3 banks shortlisted. Best fixed rate 3.79%.'},{at:now-1*DAY,t:'Pre-approval file sent to the bank. Waiting for 2 documents.'}]}),
     mk({first:'Ahmed',last:'Al Nuaimi',phone:'50 214 8890',type:'Ready villa / townhouse',area:'Arabian Ranches',price:4200000,loan:3360000,residency:'national',stage:5,advisor:'a2',legal:'l1',createdAt:now-19*DAY,
-        updates:[{at:now-19*DAY,t:'Referral received.'},{at:now-12*DAY,t:'Pre-approved at 3.69% fixed for 3 years.'},{at:now-6*DAY,t:'Valuation came in at AED 4.25M.'},{at:now-3*DAY,t:'Final offer letter signed.'},{at:now-1*DAY,t:'Mariam requested the NOC from the developer. Usually 3–5 working days.'}]}),
+        q:{done:true,at:now-17*DAY},bonus:{amt:STARTER,starter:true,status:'paid',at:now-17*DAY,paidAt:now-14*DAY},
+        updates:[{n:1,at:now-14*DAY,t:'Lead bonus of AED 150 paid to your account.'},{at:now-19*DAY,t:'Referral received.'},{at:now-12*DAY,t:'Pre-approved at 3.69% fixed for 3 years.'},{at:now-6*DAY,t:'Valuation came in at AED 4.25M.'},{at:now-3*DAY,t:'Final offer letter signed.'},{at:now-1*DAY,t:'Mariam requested the NOC from the developer. Usually 3–5 working days.'}]}),
     mk({first:'Chloe',last:'Bennett',cc:'+44',phone:'7700 900 431',type:'Ready villa / townhouse',area:'Dubai Hills Estate',price:2900000,loan:2320000,residency:'resident',stage:7,status:'payout',advisor:'a5',legal:'l2',createdAt:now-41*DAY,disbursedAt:now-12*DAY,
+        q:{done:true,at:now-39*DAY},bonus:{amt:STARTER,starter:true,status:'paid',at:now-39*DAY,paidAt:now-35*DAY},
         updates:[{at:now-41*DAY,t:'Referral received.'},{at:now-12*DAY,t:'Transfer completed at the trustee office. Loan disbursed.'},{at:now-12*DAY,t:'Keys handed over. Your payout is scheduled.'}]}),
-    mk({first:'Rohit',last:'Mehta',cc:'+91',phone:'98201 44320',type:'Off-plan',area:'Business Bay',price:1800000,loan:1440000,residency:'resident',stage:7,status:'paid',advisor:'a3',legal:'l2',createdAt:now-110*DAY,disbursedAt:now-75*DAY,paidAt:now-30*DAY,
+    mk({first:'Rohit',last:'Mehta',cc:'+91',phone:'98201 44320',type:'Off-plan',area:'Business Bay',price:1800000,loan:1440000,residency:'resident',stage:7,status:'paid',advisor:'a3',legal:'l2',createdAt:now-110*DAY,disbursedAt:now-75*DAY,paidAt:now-30*DAY,q:{done:true,at:now-108*DAY},
         updates:[{at:now-75*DAY,t:'Loan disbursed. Keys handed over.'},{at:now-30*DAY,t:'Commission of AED 4,320 paid to your account.'}]}),
   ];
 }
@@ -358,7 +398,7 @@ function tick(){const d=new Date();$('#clock').textContent=d.getHours()+':'+Stri
 
 function jbar(d){
   const all=d.status==='payout'||d.status==='paid';
-  let h='';STAGES.forEach((s,i)=>{if(i===5||i===7)h+='<span class="gap"></span>';
+  let h='';STAGES.forEach((s,i)=>{if(i===1||i===5||i===7)h+='<span class="gap"></span>';
     if(i===7)return; const c=all||i<d.stage?'done':(i===d.stage&&d.status==='active'?'cur':'');h+=`<i class="${c}"></i>`});
   const keyDone=all||d.stage>=7;
   return `<div class="jbar" aria-label="Stage ${Math.min(d.stage+1,8)} of 8">${h}<span class="key ${keyDone?'done':''}">${I.key}</span></div>`;
@@ -366,14 +406,30 @@ function jbar(d){
 function statusPill(d){
   if(d.status==='payout')return `<span class="pill warn">${I.clock} Payout in ${daysLeft(d)} days</span>`;
   if(d.status==='paid')return `<span class="pill good">${I.check} Paid ${date(d.paidAt)}</span>`;
-  if(d.status==='lost')return `<span class="pill bad">Not proceeding</span>`;
+  if(d.status==='lost')return d.q&&d.q.reason?`<span class="pill bad">Not qualified · ${REASONS[d.q.reason]}</span>`:`<span class="pill bad">Not proceeding</span>`;
+  if(d.stage===0&&d.q&&!d.q.done){if(!d.q.consent)return `<span class="pill warn">${I.clock} Waiting for client consent</span>`;return `<span class="pill">1/8 · Qualification · ${qDone(d)} of 4</span>`}
   if(d.status==='paused')return `<span class="pill grey">On hold</span>`;
   const s=STAGES[d.stage];return `<span class="pill">${d.stage+1}/8 · ${s.t}</span>`;
+}
+function qDone(d){const q=d.q||{};return [q.consent,q.assess==='yes'||q.assess==='borderline',q.docs,q.call].filter(Boolean).length}
+function qLeft(d){return Math.max(0,Math.ceil((d.q.deadline-Date.now())/DAY))}
+function qList(d){const q=d.q||{};const st=[q.consent,q.assess==='yes'||q.assess==='borderline',q.docs,q.call];
+  const sub=[q.consent?({form:'Given in your link form',whatsapp:'Replied YES on WhatsApp'}[q.method]||'Confirmed via link'):'Link sent to your client',q.assess?({yes:'Yes',borderline:'Borderline',no:'No'}[q.assess])+(q.assess==='yes'?' · DBR 31%':q.assess==='borderline'?' · DBR 48%':''):'Not entered',q.docs?'Received by your advisor':'Passport, Emirates ID, salary certificate',q.call?'Done':'Your advisor calls after documents'];
+  return `<div class="qlist">${QITEMS.map((t,i)=>`<div class="row"><span class="${st[i]?'ok':'no'}">${st[i]?I.check:''}</span><span class="grow"><b style="font-weight:600">${t}</b> <span class="muted">${sub[i]}</span></span></div>`).join('')}</div>`}
+function bonusLine(d){
+  if(!PROMO&&!d.bonus)return '';
+  if(d.q&&d.q.reason)return `<div class="brow" data-chg="3"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">Lead bonus</b><span class="muted">Not qualified: ${REASONS[d.q.reason]}</span></span><span class="pill grey">No bonus</span></div>`;
+  if(d.bonus){const b=d.bonus;const lab={accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'}[b.status];const k={accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
+    return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">Lead bonus${b.starter?' · starter':''}</b><span class="muted">${b.status==='paid'?'Paid '+date(b.paidAt):b.status==='accrued'?'Accrued '+date(b.at)+' · paid with your weekly payout':'Cancelled'}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
+  if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">Lead bonus</b><span class="muted">Accrued when qualification is done · ${qLeft(d)} days left</span></span><span class="serif num" style="font-size:20px">${aed(BONUS)}</span></div>`;
+  return '';
 }
 function attention(){
   const out=[];
   S.deals.forEach(d=>{
-    if(d.status==='active'&&d.stage<=3&&d.docs<6)out.push({d,k:'warn',t:`${esc(d.first)} still needs ${6-d.docs} document${6-d.docs>1?'s':''}`,s:'Send the upload link so the file is not delayed.'});
+    if(d.status==='active'&&d.q&&!d.q.done&&!d.q.consent)out.push({d,k:'warn',chg:1,t:`${esc(d.first)} hasn't confirmed consent yet`,s:`Ask ${esc(d.first)} to open the link from Lenty. ${qLeft(d)} days left to qualify.`});
+    if(d.status==='active'&&d.q&&!d.q.done&&d.q.consent)out.push({d,k:'info',chg:1,t:`${esc(d.first)}: qualification ${qDone(d)} of 4`,s:`Documents and a call with the advisor left.${PROMO?' '+aed(BONUS)+' bonus when done.':''}`});
+    if(d.status==='active'&&d.stage>0&&d.stage<=3&&d.docs<6)out.push({d,k:'warn',t:`${esc(d.first)} still needs ${6-d.docs} document${6-d.docs>1?'s':''}`,s:'Send the upload link so the file is not delayed.'});
     if(d.status==='active'&&d.stage===5)out.push({d,k:'info',t:`Waiting for the developer NOC for ${esc(d.first)}`,s:'Lenty legal is chasing it. Usually 3–5 working days.'});
     if(d.status==='active'&&(d.stage===3||d.stage===4))out.push({d,k:'good',t:`${esc(d.first)} is pre-approved`,s:`Show properties up to ${short(d.price)}.`});
     if(d.status==='payout')out.push({d,k:'good',t:`${aed(comm(d))} payout on ${date(payoutAt(d))}`,s:`${esc(d.first)}'s loan was disbursed ${ago(d.disbursedAt)}.`});
@@ -465,6 +521,13 @@ agreement(){
       <div class="kv"><span>Lead protection</span><span>90 days from referral</span></div>
       <div class="kv"><span>Cost to your client</span><span>AED 0</span></div>
     </div>
+    ${PROMO?'':'<!--'}<div class="card pad stack g4" data-chg="1"><span class="label" style="margin-bottom:2px">Lead bonus</span>
+      <div class="kv"><span>Per qualified client</span><span class="num">AED ${BONUS}</span></div>
+      <div class="kv"><span>Your first ${STARTER_N} clients</span><span class="num">AED ${STARTER} each</span></div>
+      <div class="kv"><span>Limit</span><span>${LIMIT} paid leads a month</span></div>
+      <div class="kv"><span>Paid</span><span>Weekly, on top of commission</span></div>
+      <div class="kv"><span>Programme</span><span>Referrals until 30 Nov 2026</span></div>
+    </div>${PROMO?'':'-->'}
     <button class="link" style="text-align:left" onclick="agreementSheet()">Read the full agreement</button>
     <button class="check ${ok?'on':''}" onclick="tmp.agree=!tmp.agree;render()"><span class="box">${I.check}</span><span>I have read and accept the Lenty referral agreement.</span></button>
     <button class="btn btn-ink" ${ok?'':'disabled'} onclick="finishSignup()" style="margin:8px 0 34px">Start referring</button>
@@ -477,7 +540,7 @@ today(){
   const pendSum=pend.reduce((a,d)=>a+comm(d),0);
   const next=pend.sort((a,b)=>payoutAt(a)-payoutAt(b))[0];
   const paid=S.deals.filter(d=>d.status==='paid').reduce((a,d)=>a+comm(d),0);
-  const att=attention().slice(0,3);
+  const att=attention().sort((a,b)=>(b.chg||0)-(a.chg||0)).slice(0,3);
   const unread=S.deals.reduce((a,d)=>a+d.updates.filter(u=>u.at>S.seen).length,0);
   return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g20">
     <div class="row between" style="align-items:flex-start;padding-top:6px">
@@ -494,9 +557,9 @@ today(){
       <button class="btn btn-accent btn-sm" onclick="startRefer()">${I.plus} Refer a client</button>
       <button class="btn btn-line btn-sm" onclick="go('check')">${I.gauge} Quick check</button>
     </div>
-    ${att.length?`<div class="stack g10"><div class="label">Needs your attention</div><div class="card" style="overflow:hidden">${att.map(a=>`<button class="item" onclick="go('deal',{id:'${a.d.id}'})"><span class="pill ${a.k==='info'?'':a.k}" style="width:32px;height:32px;padding:0;justify-content:center;border-radius:10px">${a.k==='warn'?I.alert:a.k==='good'?I.spark:I.info}</span><span class="grow"><span style="display:block;font-weight:600;font-size:14.5px">${a.t}</span><span class="small muted">${a.s}</span></span>${I.chev}</button>`).join('')}</div></div>`:''}
+    ${att.length?`<div class="stack g10"><div class="label">Needs your attention</div><div class="card" style="overflow:hidden">${att.map(a=>`<button class="item" ${a.chg?'data-chg="'+a.chg+'"':''} onclick="go('deal',{id:'${a.d.id}'})"><span class="pill ${a.k==='info'?'':a.k}" style="width:32px;height:32px;padding:0;justify-content:center;border-radius:10px">${a.k==='warn'?I.alert:a.k==='good'?I.spark:I.info}</span><span class="grow"><span style="display:block;font-weight:600;font-size:14.5px">${a.t}</span><span class="small muted">${a.s}</span></span>${I.chev}</button>`).join('')}</div></div>`:''}
     <div class="stack g10"><div class="row between"><span class="label">Deals in progress</span>${S.deals.length?`<button class="link" onclick="go('deals')">All deals</button>`:''}</div>
-      ${act.length?`<div class="card" style="overflow:hidden">${act.slice(0,3).map(dealRow).join('')}</div>`:
+      ${act.length?`<div data-chg="2" style="border-radius:var(--r)"><div class="card" style="overflow:hidden">${act.slice(0,3).map(dealRow).join('')}</div></div>`:
       `<div class="card pad stack g12" style="align-items:flex-start"><span class="serif" style="font-size:20px">Your first referral</span><p class="body muted" style="margin:0">Add a client in under a minute. You'll follow every step from the first call to the keys, and see your commission grow here.</p><button class="btn btn-ink btn-sm" style="width:auto;padding:0 18px" onclick="startRefer()">${I.plus} Refer a client</button></div>`}
     </div>
     <button class="card pad row" style="text-align:left" onclick="go('link')"><span class="avatar" style="border-radius:12px">${I.qr}</span><span class="grow"><span style="display:block;font-weight:600">Your referral link</span><span class="small muted num">${refLink()}</span></span>${I.chev}</button>
@@ -512,7 +575,7 @@ deals(){
   <div class="tabs" style="flex:none;padding-bottom:14px">${Object.keys(labels).map(k=>`<button class="${f===k?'on':''}" onclick="tmp.dealTab='${k}';render()">${labels[k]} <span class="n num">${S.deals.filter(groups[k]).length}</span></button>`).join('')}</div>
   <div class="scroll"><div class="px stack g12">
     ${S.deals.some(d=>d.sample)?`<div class="sample">${I.info}<span>These are sample deals so you can explore the app. Clear them in Account.</span></div>`:''}
-    ${list.length?`<div class="card" style="overflow:hidden">${list.map(dealRow).join('')}</div>`:`<div class="card pad stack g8" style="text-align:center;padding:32px 22px"><span class="serif" style="font-size:20px">Nothing here yet</span><p class="body muted" style="margin:0">${{active:'Deals you refer appear here while Lenty works on them.',payout:'Once a loan is disbursed, the deal moves here until your commission is paid.',paid:'Deals where your commission has been paid.',lost:'Deals that did not go ahead. You keep the lead protection for 90 days.'}[f]}</p></div>`}
+    ${list.length?`<div data-chg="1" style="border-radius:var(--r)"><div class="card" style="overflow:hidden">${list.map(dealRow).join('')}</div></div>`:`<div class="card pad stack g8" style="text-align:center;padding:32px 22px"><span class="serif" style="font-size:20px">Nothing here yet</span><p class="body muted" style="margin:0">${{active:'Deals you refer appear here while Lenty works on them.',payout:'Once a loan is disbursed, the deal moves here until your commission is paid.',paid:'Deals where your commission has been paid.',lost:'Deals that did not go ahead. You keep the lead protection for 90 days.'}[f]}</p></div>`}
   </div><div class="dock-space"></div></div>${dock()}</div>`;
 },
 deal(){
@@ -521,10 +584,11 @@ deal(){
   const all=d.status==='payout'||d.status==='paid';
   let tl='';
   PHASES.forEach((ph,pi)=>{
+    if(pi===0)tl+='<div data-chg="1" style="margin:0 -8px;padding:0 8px 2px;border-radius:12px">';
     tl+=`<div class="phase-h"><span class="label">${ph[0]}</span>${ph[1]?`<span class="small muted">${ph[1]}</span>`:''}</div><div>`;
     STAGES.forEach((s,i)=>{if(s.p!==pi)return;const done=all||i<d.stage||(i===7&&d.stage>=7);const cur=!all&&i===d.stage&&d.status==='active';
-      tl+=`<div class="tl ${done?'done':''} ${cur?'cur':''}"><div class="d">${done?I.check:''}</div><div class="grow"><div class="row between"><span class="t1">${s.t}</span><span class="small muted">${s.eta}</span></div>${cur?`<div class="t2">${s.d}</div>`:''}</div></div>`});
-    tl+='</div>';
+      tl+=`<div class="tl ${done?'done':''} ${cur?'cur':''}"><div class="d">${done?I.check:''}</div><div class="grow"><div class="row between"><span class="t1">${s.t}</span><span class="small muted">${s.eta}</span></div>${cur?`<div class="t2">${s.d}</div>`:''}${i===0&&cur&&d.q?qList(d):''}${i===0&&d.q&&d.q.done?`<div class="t2">Qualified ${date(d.q.at)}</div>`:''}${i===0&&d.q&&d.q.reason?`<div class="t2" style="color:var(--bad)">Not qualified: ${REASONS[d.q.reason]}</div>`:''}</div></div>`});
+    tl+='</div>';if(pi===0)tl+='</div>';
   });
   const payLine=d.status==='paid'?`Paid to your account on ${date(d.paidAt)}`:d.status==='payout'?`Due ${date(payoutAt(d))} · ${daysLeft(d)} of 45 days left`:'Paid 45 days after the loan is disbursed';
   const prog=d.status==='payout'?Math.min(100,(PAYOUT_DAYS-daysLeft(d))/PAYOUT_DAYS*100):d.status==='paid'?100:0;
@@ -533,7 +597,7 @@ deal(){
   <div class="scroll"><div class="px stack g20">
     <div class="stack g8">
       <div class="row" style="gap:14px"><span class="avatar" style="width:52px;height:52px;font-size:16px">${ini(d.first,d.last)}</span><div class="grow"><h1 class="h1" style="font-size:26px">${name(d)}</h1><span class="small muted">${esc(d.type)} · ${esc(d.area||'Dubai')}</span></div></div>
-      <div class="row" style="flex-wrap:wrap;gap:8px">${statusPill(d)}<span class="pill grey num">Loan ${short(d.loan)}</span>${d.sample?'<span class="pill grey">Sample</span>':''}</div>
+      <div class="row" style="flex-wrap:wrap;gap:8px">${statusPill(d)}<span class="pill grey num">Loan ${short(d.loan)}</span>${d.viaLink?'<span class="pill grey">Via your link</span>':''}${d.sample?'<span class="pill grey">Sample</span>':''}</div>
     </div>
     <div class="card pad stack g10">
       <span class="label">Your commission</span>
@@ -542,7 +606,8 @@ deal(){
       <div style="height:6px;border-radius:3px;background:var(--line-2);overflow:hidden"><div style="height:100%;width:${prog}%;background:${d.status==='paid'?'var(--good)':'var(--accent)'}"></div></div>
       <span class="small muted">${payLine}</span>
     </div>
-    <div class="card pad"><div class="row between" style="margin-bottom:6px"><span class="label">Journey to the keys</span><span class="small muted">${all?'8':Math.min(d.stage+1,8)} of 8</span></div>${tl}</div>
+    ${d.q&&d.q.reason?`<div class="verdict bad" data-chg="2"><span class="v" style="font-size:22px">Not qualified</span><span class="body" style="color:var(--ink-2)">Reason: ${REASONS[d.q.reason]}. You keep the lead protection for 90 days. If ${esc(d.first)}'s numbers change, refer again.</span></div>`:''}
+    <div class="card pad"><div class="row between" style="margin-bottom:6px"><span class="label">Journey to the keys</span><span class="small muted">${all?'8':Math.min(d.stage+1,8)} of 8</span></div>${tl}${bonusLine(d)}</div>
     <div class="card" style="overflow:hidden">
       <div class="item"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">Mortgage advisor · ${a.l.join(', ')}</span></span><button class="iconbtn" style="color:#16a34a" onclick="toast('Opening WhatsApp with ${esc(a.n.split(' ')[0])}')" aria-label="WhatsApp">${I.wa}</button></div>
       <div class="item"><span class="avatar round" style="background:var(--line-2);color:var(--ink-2)">${I.scale.replace('width="22"','width="20"').replace('height="22"','height="20"')}</span><span class="grow"><span style="display:block;font-weight:600">${lg.n}</span><span class="small muted">Lenty legal · contract, NOC, transfer</span></span><button class="iconbtn" style="color:#16a34a" onclick="toast('Opening WhatsApp with ${esc(lg.n.split(' ')[0])}')" aria-label="WhatsApp">${I.wa}</button></div>
@@ -576,7 +641,9 @@ refer(){
   const head=`<div class="px stack g12" style="flex:none;padding-bottom:12px"><div class="row between"><button class="back" onclick="${st>1?'refBack()':'cancelRefer()'}" aria-label="Back">${st>1?I.back:I.close}</button><span class="small muted">Step ${st} of 3</span></div><div class="steps"><i class="on"></i><i class="${st>1?'on':''}"></i><i class="${st>2?'on':''}"></i></div></div>`;
   const loan=f.price*(1-f.down/100);
   let body='';
-  if(st===1)body=`<div class="stack g8"><h1 class="h1">Who are you referring?</h1><p class="body muted" style="margin:0">Their advisor will message them on WhatsApp within an hour.</p></div>
+  const bon=tmp.starter?`Earn AED ${STARTER} for each of your first ${STARTER_N} qualified clients`:`Earn AED ${BONUS} for every qualified client`;
+  if(st===1)body=`${PROMO?`<div class="bonusbar" data-chg="1"><div class="aurora"></div><span class="grow" style="position:relative"><b>${bon}</b><span style="font-size:12.5px;color:rgba(255,255,255,.72)">On top of your 0.3% commission</span></span><button class="link" onclick="howSheet()">How it works</button></div>`:''}
+    <div class="stack g8"><h1 class="h1">Who are you referring?</h1><p class="body muted" style="margin:0">Their advisor will message them on WhatsApp within an hour.</p></div>
     <div><div class="f-label">First name</div><div class="field"><input id="r_first" autocomplete="off" value="${esc(f.first)}"></div></div>
     <div><div class="f-label">Last name <span class="opt">Optional</span></div><div class="field"><input id="r_last" autocomplete="off" value="${esc(f.last)}"></div></div>
     <div><div class="f-label">Mobile number</div><div class="field"><button class="cc" onclick="pickCountry('ref')"><span style="font-size:20px">${f.cc.f}</span>${f.cc.c}</button><input id="r_phone" inputmode="tel" placeholder="50 123 4567" value="${esc(f.phone)}"></div></div>
@@ -588,13 +655,17 @@ refer(){
     <div><div class="f-label">Property price</div><div class="field"><input id="r_price" inputmode="numeric" value="${f.price?fmt(f.price):''}" placeholder="e.g. 1,800,000"><span class="suf">AED</span></div></div>
     <div><div class="f-label">Down payment <span class="opt num" id="r_downv">${f.down}%</span></div><input type="range" id="r_down" min="${{national:15,resident:20,nonresident:40}[f.residency]}" max="80" step="5" value="${f.down}"></div>
     <div><div class="f-label">Area <span class="opt">Optional</span></div><div class="field"><input id="r_area" placeholder="e.g. Dubai Marina" value="${esc(f.area)}"></div></div>
+    <div class="stack g16" data-chg="1" style="margin:0 -8px;padding:8px;border-radius:16px"><div><div class="f-label">Client's monthly income</div><div class="field"><input id="r_income" inputmode="numeric" value="${f.income?fmt(f.income):''}" placeholder="e.g. 45,000"><span class="suf">AED</span></div></div>
+    <div><div class="f-label">Monthly debts <span class="opt">Loans + 5% of card limits</span></div><div class="field"><input id="r_debts" inputmode="numeric" value="${f.debts?fmt(f.debts):''}" placeholder="e.g. 3,000"><span class="suf">AED</span></div></div></div>
+    <div id="r_assess" data-chg="2">${assessCard(f)}</div>
     <div class="card pad row" style="background:var(--accent-soft);border-color:transparent"><span class="grow"><span class="small" style="color:var(--accent-ink);font-weight:600">Your estimated commission</span><span class="serif num" id="r_comm" style="display:block;font-size:26px;color:var(--ink)">${aed(loan*RATE)}</span><span class="small muted num" id="r_loan">0.3% of a ${aed(loan)} loan</span></span></div>`;
   if(st===3){const a=adv(f.advisor);body=`<div class="stack g8"><h1 class="h1">Who should call ${esc(f.first)}?</h1><p class="body muted" style="margin:0">We match an advisor who speaks your client's language.</p></div>
     <div><div class="f-label">Client's preferred language</div><div class="field"><select id="r_lang">${LANGS.map(l=>`<option ${f.lang===l?'selected':''}>${l}</option>`).join('')}</select>${I.down}</div></div>
     <button class="card pad row" style="text-align:left" onclick="advisorSheet()"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span class="small muted">Mortgage advisor</span><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">${a.l.join(', ')}</span></span><span class="link">Change</span></button>
     <div><div class="f-label">Notes for the advisor <span class="opt">Optional</span></div><textarea class="area" id="r_notes" placeholder="Viewing on Saturday, self-employed, wants a 5-year fixed rate…">${esc(f.notes)}</textarea></div>
-    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div></div>
-    <button class="check ${f.consent?'on':''}" onclick="refSave();tmp.ref.consent=!tmp.ref.consent;render()"><span class="box">${I.check}</span><span>${esc(f.first)} agreed that Lenty can contact them about a mortgage.</span></button>`;}
+    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div>${PROMO?`<div class="kv" data-chg="1"><span>Lead bonus</span><span class="num">${tmp.limit?'<span class="muted" style="font-weight:500">Not this month</span>':aed(tmp.starter?STARTER:BONUS)+' <span class="muted" style="font-weight:400">when qualified</span>'}</span></div>`:''}</div>
+    <button class="check ${f.consent?'on':''}" data-chg="2" style="border-radius:10px" onclick="refSave();tmp.ref.consent=!tmp.ref.consent;render()"><span class="box">${I.check}</span><span>${esc(f.first)} agreed that Lenty can contact them. <span class="muted">We'll send them a link to confirm.</span></span></button>
+    ${!PROMO?'':tmp.limit?`<div class="sample" data-chg="3" style="background:var(--warn-soft);color:var(--warn)">${I.alert}<span><b>Monthly limit reached.</b> This lead won't earn a bonus. Your commission is not affected.</span></div>`:`<div class="card pad row between small" data-chg="3"><span class="muted">Paid leads this month</span><span class="num" style="font-weight:600">3 of ${LIMIT}</span></div>`}`;}
   const ok=st===1?(f.first.trim()&&f.phone.replace(/\D/g,'').length>=7):st===2?f.price>0:f.consent;
   return `<div class="view"><div class="top"></div>${head}<div class="scroll"><div class="px stack g16" style="padding-bottom:20px">${body}</div></div>
   <div class="px" style="padding-top:10px;padding-bottom:34px;flex:none;border-top:1px solid var(--line-2);background:var(--ground)"><button class="btn btn-ink" id="r_next" ${ok?'':'disabled'} onclick="${st<3?'refNext()':'submitRefer()'}">${st<3?'Continue':'Send to Lenty'}</button></div></div>`;
@@ -608,7 +679,7 @@ done(){
     <div style="width:72px;height:72px;border-radius:24px;background:var(--cream);color:var(--ink);display:grid;place-items:center">${I.checkLg}</div>
     <h1 class="serif" style="font-size:34px;line-height:1.1;margin:0">${esc(d.first)} is with Lenty now.</h1>
     <div class="stack g12">
-      ${[['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 48 hours','Best 3 bank offers shortlisted'],['Every step','You get an update here, all the way to the keys'],['45 days after disbursal',`${aed(comm(d))} paid to you`]].map(([t,s])=>`<div class="row" style="align-items:flex-start;gap:14px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
+      ${[['Now',`We've sent ${esc(d.first)} a link to confirm consent. Next step: documents.`,1],['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 14 days',PROMO?`Qualification done: ${aed(BONUS)} lead bonus, paid with your weekly payout`:'Qualification: documents and a call with your advisor',2],['45 days after disbursal',`${aed(comm(d))} commission paid to you`]].map(([t,s,c])=>`<div ${c?'data-chg="'+c+'"':''} class="row" style="align-items:flex-start;gap:14px;border-radius:12px;margin:-4px -8px;padding:4px 8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
     </div>
     <div class="stack g10" style="margin-top:6px"><button class="btn btn-white" onclick="go('deal',{id:'${d.id}'})">Open deal</button><button class="btn" style="color:var(--cream)" onclick="go('today')">Back to Today</button></div>
   </div></div>`;
@@ -624,6 +695,11 @@ wallet(){
       <div class="split"><div><span class="lbl">Awaiting payout</span><b class="num">${aed(sum(pay))}</b><span class="lbl">${pay.length} deal${pay.length===1?'':'s'}</span></div><div><span class="lbl">In pipeline</span><b class="num">${aed(sum(act))}</b><span class="lbl">${act.length} deal${act.length===1?'':'s'}</span></div></div>
     </div>
     <div class="card pad row" style="gap:14px"><span class="serif num" style="font-size:28px;color:var(--accent-ink)">0.3%</span><span class="small muted">of the loan amount on every deal, paid ${PAYOUT_DAYS} days after the bank disburses the loan. Same rate for every partner.</span></div>
+    ${(()=>{const bs=S.deals.filter(d=>d.bonus).map(d=>({d,...d.bonus})).sort((a,b)=>b.at-a.at);if(!bs.length&&!PROMO)return '';const f=tmp.bf||'all';const ls=bs.filter(b=>f==='all'||b.status===f);
+      return `<div class="stack g10" data-chg="1" style="margin:0 -8px;padding:8px;border-radius:18px"><div class="row between"><span class="label">Lead bonuses</span><span class="small muted num">${aed(bs.filter(b=>b.status==='paid').reduce((a,b)=>a+b.amt,0))} paid</span></div>
+      <div class="row" data-chg="2" style="gap:6px;border-radius:12px">${[['all','All'],['accrued','Accrued'],['paid','Paid'],['cancelled','Cancelled']].map(([k,l])=>`<button class="pill ${f===k?'':'grey'}" style="height:30px;padding:0 12px;font-size:12.5px;${f===k?'background:var(--ink);color:#fff':''}" onclick="tmp.bf='${k}';render()">${l}</button>`).join('')}</div>
+      <div class="card" style="overflow:hidden">${ls.length?ls.map(b=>`<button class="item" onclick="go('deal',{id:'${b.d.id}'})"><span class="grow"><span style="display:block;font-weight:600">${name(b.d)}</span><span class="small muted">${b.starter?'Starter bonus':'Lead bonus'} · ${b.status==='paid'?'paid '+date(b.paidAt):b.status==='accrued'?'accrued '+date(b.at):'cancelled'}</span></span><span class="num" style="font-weight:700;text-align:right">${aed(b.amt)}<span style="display:block;margin-top:3px"><span class="pill ${{accrued:'warn',paid:'good',cancelled:'bad'}[b.status]}">${{accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'}[b.status]}</span></span></span></button>`).join(''):'<div class="pad small muted">No bonuses with this status.</div>'}</div>
+      <span class="small muted">Paid weekly with your other payouts. Your 0.3% commission is never reduced.</span></div>`})()}
     ${pay.length?`<div class="stack g10"><span class="label">Awaiting payout</span><div class="card" style="overflow:hidden">${pay.map(d=>row(d,date(payoutAt(d)),`Disbursed ${date(d.disbursedAt)} · ${daysLeft(d)} days left`)).join('')}</div></div>`:''}
     ${act.length?`<div class="stack g10"><span class="label">In pipeline</span><div class="card" style="overflow:hidden">${act.map(d=>row(d,'expected',`${STAGES[d.stage].t} · loan ${short(d.loan)}`)).join('')}</div></div>`:''}
     ${paid.length?`<div class="stack g10"><span class="label">Paid</span><div class="card" style="overflow:hidden">${paid.map(d=>row(d,date(d.paidAt),`Loan ${short(d.loan)}`)).join('')}</div></div>`:''}
@@ -731,7 +807,8 @@ link(){
     <div class="card pad row"><span class="grow num" style="font-weight:600;word-break:break-all">${refLink()}</span><button class="btn btn-soft btn-sm" style="width:auto;padding:0 14px" onclick="copy('${url}','Link copied')">${I.copy} Copy</button></div>
     <div class="card pad stack g10"><span class="label">Message for WhatsApp</span><p class="body" id="wamsg" style="margin:0">Hi! For your mortgage I work with Lenty: free advice, 19 UAE banks compared, and their legal team handles the transfer. Get a free pre-approval here: ${url}</p>
     <button class="btn btn-line btn-sm" onclick="copy($('#wamsg').textContent,'Message copied')">${I.wa} Copy message</button></div>
-    <div class="card pad stack g4"><div class="kv"><span>Clients via your link</span><span class="num">${S.deals.filter(d=>d.viaLink).length}</span></div><div class="kv"><span>Lead protection</span><span>90 days</span></div></div>
+    ${PROMO?'':'<!--'}<div class="sample" data-chg="1">${I.spark}<span>Clients who sign up through your link earn you the same ${aed(BONUS)} lead bonus once they qualify.</span></div>${PROMO?'':'-->'}
+    <div class="card pad stack g4"><div class="kv"><span>Clients via your link</span><span class="num">${S.deals.filter(d=>d.viaLink).length}</span></div><div class="kv"><span>Lead protection</span><span>90 days</span></div><div class="kv" data-chg="2"><span>Qualified via your link</span><span class="num">0 of 1</span></div></div>
   </div><div style="height:40px"></div></div></div>`;
 },
 rates(){
@@ -770,15 +847,19 @@ account(){
       <button class="item" onclick="resetAll()"><span class="grow" style="font-weight:600;color:var(--bad)">Reset everything</span></button>
     </div></div>
     <button class="btn btn-line" onclick="logout()">${I.logout} Log out</button>
-    <div class="stack g4" style="align-items:center;color:var(--ink);padding:8px 0"><span>${LOGO(26)}</span><span class="small muted">Partners · v1.0</span></div>
+    <div class="stack g4" style="align-items:center;color:var(--ink);padding:8px 0"><span>${LOGO(26)}</span><span class="small muted">Partners · v1.01</span></div>
   </div><div style="height:40px"></div></div></div>`;
 },
 };
+function assess(f){const loan=f.price*(1-f.down/100),r=4.25/1200,n=300,pay=loan*r/(1-Math.pow(1+r,-n));if(!f.income)return null;const dbr=(f.debts+pay)/f.income*100;return {dbr,k:dbr<=42?'yes':dbr<=50?'borderline':'no'}}
+function assessCard(f){const a=assess(f);if(!a)return `<div class="small muted">Enter income to see if ${esc(f.first||'your client')} is likely to qualify.</div>`;
+  const m={yes:['good','Yes','Likely to qualify'],borderline:['warn','Borderline','Can still qualify. Your advisor will confirm'],no:['bad','No',PROMO?'Unlikely to qualify, no lead bonus':'Unlikely to qualify']}[a.k];
+  return `<div class="verdict ${m[0]}" style="padding:14px 16px;gap:2px"><span class="small" style="font-weight:600;color:var(--ink-2)">Assessment · DBR ${a.dbr.toFixed(0)}% of 50%</span><span class="v" style="font-size:22px">${m[1]}</span><span class="small" style="color:var(--ink-2)">${m[2]}</span></div>`}
 function dealRow(d){
   return `<button class="deal" onclick="go('deal',{id:'${d.id}'})">
     <div class="row"><span class="avatar">${ini(d.first,d.last)}</span><span class="grow"><span class="row between" style="gap:8px"><b style="font-size:15.5px;font-weight:600">${name(d)}</b><span class="num" style="font-weight:700;font-size:14.5px">${aed(comm(d))}</span></span><span class="row between" style="gap:8px;margin-top:2px"><span class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.area||d.type)} · ${short(d.loan)}</span><span class="small muted" style="flex:none">${ago(d.updates.length?d.updates[d.updates.length-1].at:d.createdAt)}</span></span></span></div>
     ${jbar(d)}
-    <div>${statusPill(d)}</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${statusPill(d)}${d.viaLink?'<span class="pill grey">Via your link</span>':''}</div>
   </button>`;
 }
 
@@ -804,7 +885,7 @@ refer(){
   if(st===2){
     const pr=$('#r_price'),dn=$('#r_down');
     const upd=()=>{refSave();const loan=f.price*(1-f.down/100);$('#r_comm').textContent=aed(loan*RATE);$('#r_loan').textContent='0.3% of a '+aed(loan)+' loan';$('#r_downv').textContent=f.down+'%';b.disabled=!(f.price>0)};
-    pr.addEventListener('input',upd);pr.addEventListener('blur',()=>{if(f.price)pr.value=fmt(f.price)});dn.addEventListener('input',upd);$('#r_area').addEventListener('input',upd);$('#r_type').addEventListener('change',upd);
+    ['r_income','r_debts'].forEach(id=>$('#'+id).addEventListener('input',()=>{upd();$('#r_assess').innerHTML=assessCard(f)}));pr.addEventListener('input',upd);pr.addEventListener('blur',()=>{if(f.price)pr.value=fmt(f.price)});dn.addEventListener('input',upd);$('#r_area').addEventListener('input',upd);$('#r_type').addEventListener('change',upd);
   }
   if(st===3){
     $('#r_lang').addEventListener('change',e=>{refSave();f.lang=e.target.value;const m=ADVISORS.find(a=>a.l.includes(f.lang));if(m)f.advisor=m.id;render()});
@@ -849,20 +930,20 @@ function logout(){S.user=null;save();go('welcome')}
 function resetAll(){try{localStorage.removeItem(KEY)}catch(e){}S=fresh();tmp.agree=false;tmp.prof=null;go('welcome')}
 
 function startRefer(pre={}){
-  tmp.ref=Object.assign({first:'',last:'',cc:COUNTRIES[0],phone:'',email:'',residency:'resident',type:TYPES[0],price:0,down:20,area:'',lang:'English',advisor:'a4',notes:'',consent:false},pre);
+  tmp.ref=Object.assign({first:'',last:'',cc:COUNTRIES[0],phone:'',email:'',residency:'resident',type:TYPES[0],price:0,down:20,income:0,debts:0,area:'',lang:'English',advisor:'a4',notes:'',consent:false},pre);
   tmp.refStep=1;tmp.refFrom=R.screen==='refer'?R.tab:R.screen;go('refer');
 }
 function cancelRefer(){go(TABS.includes(tmp.refFrom)?tmp.refFrom:R.tab)}
 function refSave(){
   const f=tmp.ref,v=id=>{const e=$('#r_'+id);return e?e.value:null};
   ['first','last','phone','email','area','notes','type'].forEach(k=>{const x=v(k);if(x!==null)f[k]=x});
-  if(v('price')!==null)f.price=num(v('price'));if(v('down')!==null)f.down=+v('down');
+  if(v('price')!==null)f.price=num(v('price'));if(v('income')!==null)f.income=num(v('income'));if(v('debts')!==null)f.debts=num(v('debts'));if(v('down')!==null)f.down=+v('down');
 }
 function refNext(){refSave();tmp.refStep++;go('refer')}
 function refBack(){refSave();tmp.refStep--;go('refer')}
 function submitRefer(){
   refSave();const f=tmp.ref,now=Date.now(),a=adv(f.advisor);
-  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
+  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,docs:false,call:false,deadline:now+QDAYS*DAY},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
   S.deals.push(d);save();$('#r_next').textContent='Sending…';setTimeout(()=>go('done',{id:d.id}),600);
 }
 function contactsSheet(){
@@ -887,7 +968,7 @@ function confirmSheet(t,d,cta,fn){window.__cf=fn;sheet(sheetHead(t)+`<div style=
 function updatesSheet(){
   const all=S.deals.flatMap(d=>d.updates.map(u=>({...u,d}))).sort((a,b)=>b.at-a.at).slice(0,20);
   const seen=S.seen;S.seen=Date.now();save();
-  sheet(sheetHead('Updates')+`<div class="scroll" style="padding:0 20px 30px"><div class="card" style="overflow:hidden">${all.length?all.map(u=>`<button class="item" style="align-items:flex-start" onclick="closeSheet();setTimeout(()=>go('deal',{id:'${u.d.id}'}),200)"><span style="width:8px;height:8px;border-radius:50%;background:${u.at>seen?'var(--accent)':'var(--line)'};margin-top:7px;flex:none"></span><span class="grow"><span style="display:block;font-weight:600;font-size:14px">${name(u.d)}</span><span class="small">${esc(u.t)}</span><span class="small muted" style="display:block">${ago(u.at)}</span></span></button>`).join(''):'<div class="pad muted">No updates yet.</div>'}</div></div>`,'tall');
+  sheet(sheetHead('Updates')+`<div class="scroll" style="padding:0 20px 30px"><div class="card" style="overflow:hidden">${all.length?all.map(u=>`<button class="item" style="align-items:flex-start" ${u.n?'data-chg="1"':''} onclick="closeSheet();setTimeout(()=>go('deal',{id:'${u.d.id}'}),200)"><span style="width:8px;height:8px;border-radius:50%;background:${u.at>seen?'var(--accent)':'var(--line)'};margin-top:7px;flex:none"></span><span class="grow"><span style="display:block;font-weight:600;font-size:14px">${name(u.d)}</span><span class="small">${esc(u.t)}</span><span class="small muted" style="display:block">${ago(u.at)}</span></span></button>`).join(''):'<div class="pad muted">No updates yet.</div>'}</div></div>`,'tall');
   render();
 }
 function agreementSheet(){
@@ -896,8 +977,19 @@ function agreementSheet(){
   <p style="margin:0"><b>2. Payment.</b> Commission is paid to the partner's bank account within 45 days of disbursal.</p>
   <p style="margin:0"><b>3. Lead protection.</b> A client is attributed to the partner for 90 days from the referral date.</p>
   <p style="margin:0"><b>4. Client cost.</b> Mortgage advice and legal support from Lenty are free for the client.</p>
-  <p style="margin:0"><b>5. Consent.</b> The partner confirms the client agreed to be contacted by Lenty.</p>
+  <p style="margin:0"><b>5. Consent.</b> The partner confirms the client agreed to be contacted by Lenty, and the client confirms it through a link from Lenty.</p>
+  ${PROMO?'':'<!--'}<div class="stack g12" data-chg="1" style="margin:0 -8px;padding:8px;border-radius:12px">
+  <p style="margin:0"><b>6. Lead bonus.</b> For clients referred until 30 November 2026, Lenty pays AED ${BONUS} for every client who qualifies within 14 days: consent, affordability, documents and a call with a Lenty advisor. The partner's first ${STARTER_N} qualified clients earn AED ${STARTER} each. Up to ${LIMIT} paid leads a month. The bonus is paid weekly, on top of the commission, and is kept if the deal does not close.</p>
+  <p style="margin:0"><b>7. Cancellation.</b> Lenty may cancel a lead bonus within 30 days of accrual only in a case of fraud. A paid bonus is then deducted from the partner's next payouts.</p></div>${PROMO?'':'-->'}
   <p class="small muted" style="margin:0">Summary for the prototype. The signed Lenty referral agreement prevails.</p></div></div>`,'tall');
+}
+function howSheet(){
+  const steps=[['Your client confirms consent','Lenty sends them a link right after you refer.'],['The numbers work','Debt payments up to 50% of income and the minimum down payment for their residency.'],['Documents arrive','Passport, Emirates ID or visa, salary certificate. Your client sends them to the advisor.'],['A call with the advisor','The advisor confirms your client really plans to buy.']];
+  sheet(sheetHead('How the lead bonus works')+`<div class="scroll" style="padding:0 20px 30px"><div class="stack g16">
+  <div class="hero" style="cursor:default"><div class="aurora"></div><div class="lbl">For every qualified client</div><div class="big num" style="margin-top:6px">AED ${BONUS}</div><div class="lbl" style="margin-top:6px">AED ${STARTER} each for your first ${STARTER_N} · on top of your 0.3% commission</div></div>
+  <div class="card pad"><span class="label">A lead qualifies within 14 days when</span><div style="margin-top:12px">${steps.map(([a,b],i)=>`<div class="tl"><div class="d" style="background:var(--ink);border-color:var(--ink);font-size:12px;font-weight:700">${i+1}</div><div class="grow"><div class="t1">${a}</div><div class="t2">${b}</div></div></div>`).join('')}</div></div>
+  <div class="card pad stack g4"><div class="kv"><span>Programme</span><span>Referrals until 30 Nov 2026</span></div><div class="kv"><span>Paid</span><span>Weekly, with your other payouts</span></div><div class="kv"><span>Limit</span><span>${LIMIT} paid leads a month</span></div><div class="kv"><span>Deal doesn't close</span><span>You keep the bonus</span></div><div class="kv"><span>Not counted</span><span>Duplicates, clients already with Lenty</span></div></div>
+  </div></div>`,'tall');
 }
 function ibanSheet(){
   sheet(sheetHead('Payout account')+`<div style="padding:0 20px" class="stack g12"><div><div class="f-label">Account holder</div><div class="field"><input id="ib_name" value="${esc(S.user.first+' '+S.user.last)}"></div></div><div><div class="f-label">IBAN</div><div class="field"><input id="ib_iban" placeholder="AE07 0331 2345 6789 0123 456" value="${esc(S.user.iban||'')}"></div><div class="hint">UAE IBANs start with AE and have 23 characters.</div></div></div>
@@ -914,7 +1006,35 @@ function contactSheet(){
   <div class="card pad row"><span class="grow num" style="font-weight:600">partners@lenty.com</span><button class="link" onclick="copy('partners@lenty.com','Email copied')">Copy</button></div></div>`);
 }
 
-render();
+/* ================= Screen preview mode (?screen=…) for the screens overview ================= */
+const QP=new URLSearchParams(window.__Q||location.search);
+(function boot(){
+  const sc=QP.get('screen');
+  if(!sc||!SCREENS[sc]){render();return}
+  save=()=>{};
+  S=fresh();
+  S.user={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235',cc:'+971',phone:'50 123 4567',since:Date.now()-90*DAY,iban:''};
+  S.deals=sampleDeals();S.seen=Date.now()-2*DAY;
+  tmp.phone='50 123 4567';tmp.auth={cc:'+971',phone:'50 123 4567'};
+  tmp.prof={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235'};tmp.agree=QP.get('agree')==='1';
+  PROMO=QP.get('promo')!=='0';if(!PROMO){STAGES[0].d='Consent, affordability, documents and a call with your advisor.';PHASES[0][1]='Lenty advisor checks the basics';}tmp.starter=QP.get('starter')==='1';tmp.limit=QP.get('limit')==='1';tmp.bf='all';
+  const byName=n=>(S.deals.find(d=>d.first.toLowerCase()===String(n||'').toLowerCase())||S.deals[1]).id;
+  const p={};
+  if(sc==='deal')p.id=byName(QP.get('deal'));
+  if(sc==='done')p.id=byName('yusuf');
+  if(sc==='refer'){
+    startRefer({first:'Maria',last:'Santos',phone:'52 334 1189',price:2400000,down:20,area:'Dubai Marina',lang:'English',advisor:'a4',income:45000,debts:3000});
+    tmp.refStep=+(QP.get('step')||1);
+  }
+  R.screen=sc;R.params=p;if(TABS.includes(sc))R.tab=sc;
+  render();
+  const sh=QP.get('sheet');
+  const sheets={how:howSheet,updates:updatesSheet,agreement:agreementSheet,advisor:advisorSheet,contacts:contactsSheet,iban:ibanSheet,country:()=>pickCountry('auth')};
+  if(sheets[sh]){const a=document.querySelector('.view')&&null;sheets[sh]();document.querySelectorAll('.sheet,.backdrop').forEach(e=>e.style.animation='none')}
+  document.querySelectorAll('.view').forEach(e=>e.style.animation='none');
+  const AT=QP.get('at');if(AT){const go2=()=>{const scs=[...document.querySelectorAll('.scroll')];const sc=scs[scs.length-1];if(!sc)return;if(AT==='bottom'){sc.scrollTop=sc.scrollHeight;return}const el=document.querySelector(AT);if(!el)return;const c=el.closest('.scroll')||sc;c.scrollTop=el.getBoundingClientRect().top-c.getBoundingClientRect().top+c.scrollTop-(+QP.get('off')||24)};go2();setTimeout(go2,60);}
+  if(window.__MARK||QP.get('mark')==='1')document.documentElement.classList.add('mark');
+})();
 </script>
 </body>
 </html>
