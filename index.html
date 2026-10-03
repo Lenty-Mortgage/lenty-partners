@@ -296,10 +296,27 @@ const I={
 const RATE=0.003, PAYOUT_DAYS=45, DAY=864e5;
 let PROMO=true;
 /* Settings (the spec's configuration table): amounts and limits live here, separate from texts */
-const PROGRAMME_END=Date.UTC(2026,10,30,20,0,0); /* 1 Dec 2026 00:00 Dubai time */
+let PROGRAMME_END=Date.UTC(2026,10,30,20,0,0); /* 1 Dec 2026 00:00 Dubai time; overridden by the Admin tab */
 const TERMS_VERSION='2026-10-lead-bonus', TERMS_VERSION_CORE='2026-10-core', CONSENT_TEXT_VERSION='consent-2026-10';
 const SETTINGS={bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,qualification_days:14,cancel_window_days:30,lead_bonus_ends:'30 Nov 2026',lead_bonus_ends_long:'30 November 2026'};
-const BONUS=SETTINGS.bonus_amount_aed, STARTER=SETTINGS.starter_bonus_amount_aed, STARTER_N=SETTINGS.starter_bonus_count, LIMIT=SETTINGS.monthly_limit, QDAYS=SETTINGS.qualification_days;
+let BONUS=SETTINGS.bonus_amount_aed, STARTER=SETTINGS.starter_bonus_amount_aed, STARTER_N=SETTINGS.starter_bonus_count, LIMIT=SETTINGS.monthly_limit, QDAYS=SETTINGS.qualification_days;
+/* Admin settings (consultant.html, Admin tab) are shared through this browser's storage and apply instantly.
+   Screen previews (?screen=…) ignore them so screenshots stay stable; ?promo=0 forces the programme off there. */
+const ADMIN_KEY='lenty-admin-v1.02';
+const ADMIN_DEFAULTS={lead_bonus_enabled:true,starter_bonus_enabled:true,lead_bonus_starts_at:null,lead_bonus_ends_at:Date.UTC(2026,10,30,20,0,0),bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,cancel_window_days:30,promo_slot:{text:'',link:'',from:null,to:null}};
+let ADMIN=ADMIN_DEFAULTS, PREVIEW=false;
+function loadAdmin(){try{return Object.assign({},ADMIN_DEFAULTS,JSON.parse(localStorage.getItem(ADMIN_KEY)||'{}'))}catch(e){return Object.assign({},ADMIN_DEFAULTS)}}
+function programmeOn(a,now){now=now||Date.now();return !!a.lead_bonus_enabled&&!(a.lead_bonus_starts_at&&now<a.lead_bonus_starts_at)&&!(a.lead_bonus_ends_at&&now>=a.lead_bonus_ends_at)}
+const dubaiDate=(t,o)=>new Date(t).toLocaleDateString('en-GB',Object.assign({timeZone:'Asia/Dubai'},o));
+function applyAdmin(){const a=ADMIN=loadAdmin();
+  SETTINGS.bonus_amount_aed=BONUS=+a.bonus_amount_aed;SETTINGS.starter_bonus_amount_aed=STARTER=+a.starter_bonus_amount_aed;SETTINGS.starter_bonus_count=STARTER_N=+a.starter_bonus_count;SETTINGS.monthly_limit=LIMIT=+a.monthly_limit;SETTINGS.cancel_window_days=+a.cancel_window_days;
+  PROGRAMME_END=a.lead_bonus_ends_at||Infinity;
+  if(a.lead_bonus_ends_at){const last=a.lead_bonus_ends_at-1;SETTINGS.lead_bonus_ends=dubaiDate(last,{day:'numeric',month:'short',year:'numeric'});SETTINGS.lead_bonus_ends_long=dubaiDate(last,{day:'numeric',month:'long',year:'numeric'})}
+  else{SETTINGS.lead_bonus_ends=SETTINGS.lead_bonus_ends_long=tx('core.programme.no_end')}
+  PROMO=programmeOn(a);applyPromoTexts()}
+function applyPromoTexts(){STAGES[0].d=tx(PROMO?'core.stage.qualification.with_bonus':'core.stage.qualification.no_bonus');PHASES[0][1]=PROMO?tx('promo.lead_bonus.phase_subtitle'):tx('core.phase.qualification.no_bonus')}
+function promoSlot(){if(PREVIEW)return '';const sl=ADMIN.promo_slot||{},now=Date.now();if(!sl.text||(sl.from&&now<sl.from)||(sl.to&&now>=sl.to))return '';
+  return `<div class="bonusbar"><div class="aurora"></div><span class="grow" style="position:relative"><b>${esc(sl.text)}</b></span>${sl.link?`<a class="link" href="${esc(sl.link)}" target="_blank" rel="noopener">${tx('core.promo_slot.more')}</a>`:''}</div>`}
 /* Interface texts for the lead bonus feature (translation keys from the spec).
    promo.lead_bonus.* = promo layer, hidden when the programme is off; core.* = always on, two variants where the spec asks for them. */
 const TXT={
@@ -327,6 +344,9 @@ const TXT={
   "promo.lead_bonus.line.accrued":"Accrued {date} · paid with your weekly payout",
   "promo.lead_bonus.line.on_hold":"We're checking this lead. The bonus is accrued once the check is done.",
   "promo.lead_bonus.line.cancelled":"Cancelled",
+  "promo.lead_bonus.line.cancelled_deducted":"Cancelled after payout · deducted from your next payouts",
+  "core.promo_slot.more":"Learn more",
+  "core.programme.no_end":"further notice",
   "promo.lead_bonus.line.limit":"Monthly limit reached. This lead won't earn a bonus.",
   "promo.lead_bonus.line.not_eligible":"Referred while the bonus programme was off. No lead bonus.",
   "promo.lead_bonus.line.pending":"Accrued when qualification is done · {n} days left",
@@ -385,7 +405,7 @@ const TXT={
 };
 function tx(k,v){const s=TXT[k];if(s==null)return k;const d={bonus:BONUS,starter:STARTER,starterN:STARTER_N,limit:LIMIT,days:QDAYS,ends:SETTINGS.lead_bonus_ends,endsLong:SETTINGS.lead_bonus_ends_long,cancelDays:SETTINGS.cancel_window_days,...v};return s.replace(/\{(\w+)\}/g,(m,n)=>n in d?d[n]:m)}
 const QITEMS=['Consent','Assessment','Documents','Consultant call'];
-const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days',expired:'No decision within 14 days'};
+const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days',fraud:'Fraud',expired:'No decision within 14 days'};
 const COUNTRIES=[
   {f:'🇦🇪',c:'+971',n:'United Arab Emirates'},{f:'🇬🇧',c:'+44',n:'United Kingdom'},{f:'🇮🇳',c:'+91',n:'India'},
   {f:'🇸🇦',c:'+966',n:'Saudi Arabia'},{f:'🇺🇦',c:'+380',n:'Ukraine'},{f:'🇷🇺',c:'+7',n:'Russia'},
@@ -504,7 +524,7 @@ function bonusLine(d){
   if(!PROMO&&!d.bonus)return '';
   if(d.q&&d.q.reason)return `<div class="brow" data-chg="3"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.not_qualified',{reason:REASONS[d.q.reason]})}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
   if(d.bonus){const b=d.bonus;const lab=tx('promo.lead_bonus.status.'+b.status);const k={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
-    return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}${b.starter?tx('promo.lead_bonus.starter_suffix'):''}</b><span class="muted">${tx('promo.lead_bonus.line.'+b.status,{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
+    return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}${b.starter?tx('promo.lead_bonus.starter_suffix'):''}</b><span class="muted">${tx('promo.lead_bonus.line.'+(b.status==='cancelled'&&b.deducted?'cancelled_deducted':b.status),{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
   if(d.bonusSkip)return `<div class="brow"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.'+d.bonusSkip)}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
   if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.pending',{n:qLeft(d)})}</span></span><span class="serif num" style="font-size:20px">${aed(BONUS)}</span></div>`;
   return '';
@@ -727,7 +747,7 @@ refer(){
   const loan=f.price*(1-f.down/100);
   let body='';
   const bon=tmp.starter?tx('promo.lead_bonus.banner_starter'):tx('promo.lead_bonus.banner');
-  if(st===1)body=`${PROMO?`<div class="bonusbar" data-chg="1"><div class="aurora"></div><span class="grow" style="position:relative"><b>${bon}</b><span style="font-size:12.5px;color:rgba(255,255,255,.72)">${tx('promo.lead_bonus.banner_sub')}</span></span><button class="link" onclick="howSheet()">${tx('promo.lead_bonus.how_link')}</button></div>`:''}
+  if(st===1)body=`${!PROMO?promoSlot():`<div class="bonusbar" data-chg="1"><div class="aurora"></div><span class="grow" style="position:relative"><b>${bon}</b><span style="font-size:12.5px;color:rgba(255,255,255,.72)">${tx('promo.lead_bonus.banner_sub')}</span></span><button class="link" onclick="howSheet()">${tx('promo.lead_bonus.how_link')}</button></div>`}
     <div class="stack g8"><h1 class="h1">Who are you referring?</h1><p class="body muted" style="margin:0">Their advisor will message them on WhatsApp within an hour.</p></div>
     <div><div class="f-label">First name</div><div class="field"><input id="r_first" autocomplete="off" value="${esc(f.first)}"></div></div>
     <div><div class="f-label">Last name <span class="opt">Optional</span></div><div class="field"><input id="r_last" autocomplete="off" value="${esc(f.last)}"></div></div>
@@ -1028,7 +1048,7 @@ function refNext(){refSave();tmp.refStep++;go('refer')}
 function refBack(){refSave();tmp.refStep--;go('refer')}
 function submitRefer(){
   refSave();const f=tmp.ref,now=Date.now(),a=adv(f.advisor);
-  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PROMO&&now<PROGRAMME_END,terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
+  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PROMO&&now<PROGRAMME_END,terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER,starterEnabled:!!ADMIN.starter_bonus_enabled},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
   S.deals.push(d);save();$('#r_next').textContent='Sending…';setTimeout(()=>go('done',{id:d.id}),600);
 }
 function contactsSheet(){
@@ -1096,13 +1116,13 @@ const QP=new URLSearchParams(window.__Q||location.search);
 (function boot(){
   const sc=QP.get('screen');
   if(!sc||!SCREENS[sc]){
-    expireLeads();render();
+    applyAdmin();expireLeads();render();
     /* the consultant page (consultant.html) writes to the same browser storage: pick up its changes */
-    window.addEventListener('storage',e=>{if(e.key!==KEY)return;try{S=Object.assign(fresh(),JSON.parse(e.newValue||'{}'))}catch(err){return}
+    window.addEventListener('storage',e=>{if(e.key===ADMIN_KEY){applyAdmin();const sc0=$('#app .scroll'),t0=sc0?sc0.scrollTop:0;render();const n0=$('#app .scroll');if(n0)n0.scrollTop=t0;return}if(e.key!==KEY)return;try{S=Object.assign(fresh(),JSON.parse(e.newValue||'{}'))}catch(err){return}
       if(!S.user&&R.screen!=='welcome'&&!['phone','otp','profile','agreement'].includes(R.screen)){go('welcome');return}
       if(R.screen==='deal'&&!S.deals.find(x=>x.id===R.params.id)){go('deals');return}
       const sc2=$('#app .scroll'),top=sc2?sc2.scrollTop:0;render();const n=$('#app .scroll');if(n)n.scrollTop=top});
-    setInterval(()=>{if(expireLeads())render()},60000);
+    setInterval(()=>{const was=PROMO;applyAdmin();if(expireLeads()||was!==PROMO)render()},60000);
     return}
   save=()=>{};
   S=fresh();
@@ -1110,7 +1130,7 @@ const QP=new URLSearchParams(window.__Q||location.search);
   S.deals=sampleDeals();S.seen=Date.now()-2*DAY;
   tmp.phone='50 123 4567';tmp.auth={cc:'+971',phone:'50 123 4567'};
   tmp.prof={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235'};tmp.agree=QP.get('agree')==='1';
-  PROMO=QP.get('promo')!=='0';if(!PROMO){STAGES[0].d=tx('core.stage.qualification.no_bonus');PHASES[0][1]=tx('core.phase.qualification.no_bonus');}tmp.starter=QP.get('starter')==='1';tmp.limit=QP.get('limit')==='1';tmp.bf='all';
+  PREVIEW=true;PROMO=QP.get('promo')!=='0';if(!PROMO){STAGES[0].d=tx('core.stage.qualification.no_bonus');PHASES[0][1]=tx('core.phase.qualification.no_bonus');}tmp.starter=QP.get('starter')==='1';tmp.limit=QP.get('limit')==='1';tmp.bf='all';
   const byName=n=>(S.deals.find(d=>d.first.toLowerCase()===String(n||'').toLowerCase())||S.deals[1]).id;
   const p={};
   if(sc==='deal')p.id=byName(QP.get('deal'));

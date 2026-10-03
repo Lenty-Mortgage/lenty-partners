@@ -118,12 +118,27 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:1
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--cream);padding:12px 16px;border-radius:14px;font-weight:500;z-index:50;box-shadow:0 10px 30px rgba(0,44,31,.3);max-width:min(560px,calc(100vw - 32px))}
 .demo{font-size:12.5px;color:var(--muted)}
 .demo summary{cursor:pointer;font-weight:600}
+.toggle{width:46px;height:28px;border-radius:999px;background:#d0cbbb;position:relative;transition:background .2s;flex:none}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.toggle.on{background:var(--accent)}.toggle.on::after{transform:translateX(18px)}
+.toggle[disabled]{opacity:.45;cursor:not-allowed}
+.agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:18px;align-items:start}
+.acard{padding:18px;display:flex;flex-direction:column;gap:14px}
+.acard h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.swrow{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.btable{overflow-x:auto}
+.brow2{display:grid;grid-template-columns:minmax(140px,1.1fr) minmax(130px,1fr) 110px 120px 92px 92px minmax(170px,auto);gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line-2);min-width:980px}
+.brow2.h{border-top:0;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stat{background:var(--line-2);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:18px}
+
 </style>
 </head>
 <body>
 <header class="top"><div class="in">
   <div class="brand"><svg height="24" viewBox="141 350 753 308" fill="currentColor" role="img" aria-label="Lenty"><use href="#lenty"/></svg><span class="lbl">Team</span></div>
-  <nav class="tabs"><button class="tab on">Qualification</button><button class="tab" disabled title="Admin tab is the next step (B3)">Admin <span class="soon">Soon</span></button></nav>
+  <nav class="tabs"><button class="tab" id="tab-queue" onclick="setTab('queue')">Qualification</button><button class="tab" id="tab-admin" onclick="setTab('admin')">Admin</button></nav>
   <div class="who"><label for="me">Signed in as</label><select id="me"></select><a href="./" target="_blank" rel="noopener">Agent app ↗</a></div>
 </div></header>
 <main class="page" id="page"></main>
@@ -132,7 +147,14 @@ textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:1
 <script>
 /* ===================== Settings (same values as the agent app; in production: configuration table, edited in the Admin tab) ===================== */
 const SETTINGS={bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,qualification_days:14,cancel_window_days:30,decision_working_days:2,starter_bonus_enabled:true};
-const PROGRAMME_END=Date.UTC(2026,10,30,20,0,0); /* 1 Dec 2026 00:00 Dubai */
+let PROGRAMME_END=Date.UTC(2026,10,30,20,0,0); /* 1 Dec 2026 00:00 Dubai; overridden by the Admin tab */
+/* Admin settings, shared with the agent app through this browser's storage */
+const ADMIN_KEY='lenty-admin-v1.02';
+const ADMIN_DEFAULTS={lead_bonus_enabled:true,starter_bonus_enabled:true,lead_bonus_starts_at:null,lead_bonus_ends_at:Date.UTC(2026,10,30,20,0,0),bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,cancel_window_days:30,promo_slot:{text:'',link:'',from:null,to:null}};
+let ADMIN=ADMIN_DEFAULTS;
+function loadAdmin(){try{return Object.assign({},ADMIN_DEFAULTS,JSON.parse(localStorage.getItem(ADMIN_KEY)||'{}'))}catch(e){return Object.assign({},ADMIN_DEFAULTS)}}
+function programmeOn(a,now){now=now||Date.now();return !!a.lead_bonus_enabled&&!(a.lead_bonus_starts_at&&now<a.lead_bonus_starts_at)&&!(a.lead_bonus_ends_at&&now>=a.lead_bonus_ends_at)}
+function applyAdmin(){const a=ADMIN=loadAdmin();['bonus_amount_aed','starter_bonus_amount_aed','starter_bonus_count','monthly_limit','cancel_window_days'].forEach(k=>SETTINGS[k]=+a[k]);SETTINGS.starter_bonus_enabled=!!a.starter_bonus_enabled;PROGRAMME_END=a.lead_bonus_ends_at||Infinity}
 const CONSENT_TEXT_VERSION='consent-2026-10';
 const DAY=864e5;
 const AGENT_KEY='lenty-partners-v1.02';   /* agent app storage (same browser) */
@@ -193,7 +215,7 @@ function tx(k,v={}){const s=TXT[k];if(s==null)return k;return s.replace(/\{(\w+)
 
 /* ===================== Reference data ===================== */
 const ADVISORS=[{id:'a1',n:'Elena Petrenko'},{id:'a2',n:'Amira Haddad'},{id:'a3',n:'Farhan Qureshi'},{id:'a4',n:'Daniel Okafor'},{id:'a5',n:'Sofia Lindqvist'},{id:'a6',n:'Omar Saleh'}];
-const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days',expired:'No decision within 14 days'};
+const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days',fraud:'Fraud',expired:'No decision within 14 days'};
 const CONSULTANT_REASONS=['duplicate','assessment_no','no_response','no_documents']; /* "fraud" is admin-only */
 const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resident'};
 const MIN_DOWN={national:15,resident:20,nonresident:40};
@@ -267,12 +289,15 @@ function agentStats(id,exceptId){
 }
 /* Bonus decision at "Confirm qualification" (spec: rules of payout, promo layer, anti-fraud) */
 function decideBonus(l){
-  const eligible=l.bonusEligible!==false&&l.createdAt<PROGRAMME_END;
+  /* right to a bonus and its amount are fixed when the lead was submitted (bonusEligible, terms) */
+  const eligible=l.bonusEligible===true||(l.bonusEligible!==false&&l.createdAt<ADMIN_DEFAULTS.lead_bonus_ends_at);
   if(!eligible)return {skip:'not_eligible'};
   const st=agentStats(l.agent,l.id);
   if(st.monthBonuses>=SETTINGS.monthly_limit)return {skip:'limit'};
-  const starter=st.isNew;
   const terms=l.terms||{};
+  /* starter = one of the agent's first N qualified leads (order of qualification), if starter bonuses were on at submission */
+  const starterOn=terms.starterEnabled!==undefined?terms.starterEnabled:SETTINGS.starter_bonus_enabled;
+  const starter=starterOn&&st.starterUsed<SETTINGS.starter_bonus_count&&st.qualifiedTotal<SETTINGS.starter_bonus_count;
   const amt=starter?(terms.starter||SETTINGS.starter_bonus_amount_aed):(terms.bonus||SETTINGS.bonus_amount_aed);
   const why=(l.riskFlags||[]).length?'risk':st.suspended?'suspended':null;
   return {bonus:{amt,starter,status:why?'on_hold':'accrued',at:Date.now(),why}};
@@ -302,8 +327,8 @@ function expireAll(){
 }
 
 /* ===================== UI state ===================== */
-const ui={filter:'decide',sel:null,me:'a6',reject:false,reason:'',docs:{}};
-try{ui.me=localStorage.getItem('lenty-team-me')||'a6'}catch(e){}
+const ui={tab:'queue',filter:'decide',sel:null,me:'a6',reject:false,reason:'',docs:{},bf:{agent:'all',status:'all',period:'all'},cancel:null,payConfirm:false,resetConfirm:false};
+try{ui.me=localStorage.getItem('lenty-team-me')||'a6';ui.tab=localStorage.getItem('lenty-team-tab')||'queue'}catch(e){}
 
 function counts(ls){const c={decide:0,consent:0,progress:0,closed:0,all:ls.length};ls.forEach(l=>{c[bucket(l)]++});return c}
 function bucket(l){const s=state(l);if(s==='qualified'||s==='rejected'||s==='expired')return 'closed';if(s==='consent_pending')return 'consent';return ready(l)?'decide':'progress'}
@@ -319,7 +344,10 @@ function deadlineCell(l){
 }
 function decideCell(l){const t=decideBy(l);if(!t||state(l)!=='in_qualification')return '<span class="muted">—</span>';const late=Date.now()>t;return `<span class="${late?'pill bad':'small'}">${late?tx('team.decide_late',{date:date(t)}):date(t)}</span>`}
 
+function setTab(t){ui.tab=t;try{localStorage.setItem('lenty-team-tab',t)}catch(e){}window.scrollTo(0,0);render()}
 function render(){
+  $('#tab-queue').classList.toggle('on',ui.tab!=='admin');$('#tab-admin').classList.toggle('on',ui.tab==='admin');
+  if(ui.tab==='admin'){renderAdmin();return}
   const ls=allLeads().sort((a,b)=>{const da=a.q&&a.q.deadline||0,db=b.q&&b.q.deadline||0;return bucket(a)==='closed'?1:bucket(b)==='closed'?-1:da-db});
   const c=counts(ls);const shown=ls.filter(l=>ui.filter==='all'||bucket(l)===ui.filter);
   if(ui.sel&&!ls.find(l=>l.id===ui.sel))ui.sel=null;
@@ -443,11 +471,164 @@ async function act(a,l){
 }
 function resetDemo(){try{localStorage.removeItem(TEAM_KEY)}catch(e){}ui.sel=null;team();expireAll();render();toast('Demo leads reset')}
 
+
+/* ===================== Admin tab (B3) ===================== */
+Object.assign(TXT,{
+  "admin.title":"Admin","admin.sub":"Changes apply instantly in the agent app and in the qualification queue in this browser.",
+  "admin.programme":"Lead bonus programme","admin.state.active":"Active until {date}","admin.state.active_open":"Active, no end date","admin.state.scheduled":"Starts {date}","admin.state.off":"Switched off","admin.state.ended":"Ended {date}",
+  "admin.enabled":"Lead bonus","admin.enabled_sub":"Off: the agent app hides the promo layer. Leads already submitted keep their right to a bonus for their 14 days.",
+  "admin.starter":"Starter bonus for new agents","admin.starter_sub":"For each of an agent's first qualified leads. Works only while the lead bonus is on.",
+  "admin.starts":"Starts (Dubai time, 00:00)","admin.ends":"Ends (Dubai time, 00:00)","admin.ends_hint":"Referrals until the day before. Leave empty for no end date.",
+  "admin.slot":"Promo slot","admin.slot_sub":"Shown on step 1 of Refer while the lead bonus is off. Leave the text empty to show nothing.",
+  "admin.slot_text":"Banner text","admin.slot_link":"Link (optional)","admin.slot_from":"Show from","admin.slot_to":"Show until",
+  "admin.save_programme":"Save dates and promo slot","admin.saved":"Saved. The agent app is updated.",
+  "admin.settings":"Amounts and limits","admin.settings_sub":"Amounts apply to leads submitted after saving: a lead is paid the amount that was valid when it was submitted. The limit and the number of starter leads apply to new accruals.",
+  "admin.bonus":"Per qualified lead, AED","admin.starter_amt":"Starter bonus, AED","admin.starter_n":"Starter leads","admin.limit":"Paid leads per month","admin.window":"Cancellation window, days","admin.save_settings":"Save amounts and limits",
+  "admin.bonuses":"Lead bonuses","admin.f.agent":"Agent","admin.f.status":"Status","admin.f.period":"Period","admin.f.all":"All","admin.f.month":"This month",
+  "admin.col.agent":"Agent","admin.col.client":"Client","admin.col.amount":"Amount","admin.col.status":"Status","admin.col.accrued":"Created","admin.col.paid":"Paid","admin.col.actions":"Actions",
+  "admin.approve":"Approve","admin.cancel":"Cancel","admin.cancel_go":"Cancel bonus","admin.keep":"Keep","admin.window_closed":"Window closed","admin.window_left":"{n} days to cancel",
+  "admin.cancel_reason":"Reason","admin.cancel_note":"Note for the record",
+  "admin.fraud.fake":"Fraud: fake or unreachable client","admin.fraud.own":"Fraud: agent's own contact","admin.fraud.dup":"Fraud: same client through another agent",
+  "admin.fraud.lead":"Fraud: lead rejected by admin",
+  "admin.deduct":"Already paid: the amount will be deducted from the agent's next payouts.",
+  "admin.stat.review":"On review","admin.stat.accrued":"Accrued, to pay","admin.stat.paid":"Paid this month",
+  "admin.payout":"Run weekly payout","admin.payout_confirm":"Pay {n} accrued bonuses, {sum} in total?","admin.payout_go":"Pay now","admin.payout_none":"No accrued bonuses to pay.","admin.payout_done":"Paid {n} bonuses, {sum}.",
+  "admin.csv":"Export CSV","admin.empty":"No bonuses match the filters.",
+  "admin.risk":"Risk review","admin.risk_sub":"Leads with risk flags and agents whose bonuses are suspended. Their bonuses wait on review until you approve or cancel them.",
+  "admin.risk_none":"No risk flags.","admin.reject_fraud":"Reject lead as fraud","admin.suspended":"{name}: {pct}% of this month's decisions were rejections. New bonuses go on review.",
+  "admin.demo":"Demo data","admin.demo_sub":"Resets everything in this browser: admin settings, demo leads of other agents, and the agent account with its leads.",
+  "admin.reset":"Reset demo data","admin.reset_confirm":"Reset all demo data in this browser? This can't be undone.","admin.reset_go":"Yes, reset everything",
+  "agent.msg.fraud_bonus_cancelled":"Lead bonus of {amount} cancelled.",
+  "agent.msg.fraud_bonus_deducted":"Lead bonus of {amount} cancelled and will be deducted from your next payouts.",
+  "agent.msg.bonus_approved":"Your {amount} lead bonus was approved and accrued.",
+  "agent.msg.bonus_paid":"Lead bonus of {amount} paid to your account.",
+  "agent.msg.bonus_cancelled":"Lead bonus of {amount} cancelled: {reason}.",
+  "agent.msg.bonus_deducted":"Lead bonus of {amount} cancelled: {reason}. It will be deducted from your next payouts.",
+});
+const FRAUD_REASONS=['fake','own','dup'];
+const dubai=(t,o)=>new Date(t).toLocaleDateString('en-GB',Object.assign({timeZone:'Asia/Dubai',day:'numeric',month:'short',year:'numeric'},o));
+const toDateInput=t=>{if(!t)return '';const d=new Date(t+4*36e5);return d.toISOString().slice(0,10)};           /* Dubai = UTC+4 */
+const fromDateInput=v=>{if(!v)return null;const [y,m,d]=v.split('-').map(Number);return Date.UTC(y,m-1,d)-4*36e5};
+function saveAdmin(patch){const a=Object.assign(loadAdmin(),patch);store(ADMIN_KEY,a);applyAdmin()}
+function programmeState(){const a=ADMIN,now=Date.now();
+  if(!a.lead_bonus_enabled)return ['grey',tx('admin.state.off')];
+  if(a.lead_bonus_starts_at&&now<a.lead_bonus_starts_at)return ['warn',tx('admin.state.scheduled',{date:dubai(a.lead_bonus_starts_at)})];
+  if(a.lead_bonus_ends_at&&now>=a.lead_bonus_ends_at)return ['bad',tx('admin.state.ended',{date:dubai(a.lead_bonus_ends_at-1)})];
+  return ['good',a.lead_bonus_ends_at?tx('admin.state.active',{date:dubai(a.lead_bonus_ends_at-1)}):tx('admin.state.active_open')]}
+function bonuses(){return allLeads().filter(l=>l.bonus).map(l=>({l,b:l.bonus,a:agentInfo(l.agent)})).sort((x,y)=>(y.b.at||0)-(x.b.at||0))}
+function windowLeft(b){const from=b.approvedAt||b.at;return Math.ceil((from+SETTINGS.cancel_window_days*DAY-Date.now())/DAY)}
+const STATUS_TXT={on_hold:'On review',accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'},STATUS_CLS={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'};
+function filteredBonuses(){const f=ui.bf;return bonuses().filter(x=>(f.agent==='all'||x.l.agent===f.agent)&&(f.status==='all'||x.b.status===f.status)&&(f.period==='all'||sameMonth(x.b.at)))}
+function renderAdmin(){
+  const a=ADMIN,[pc,pt]=programmeState(),sl=a.promo_slot||{};
+  const all=bonuses(),fb=filteredBonuses();
+  const acc=all.filter(x=>x.b.status==='accrued'),rev=all.filter(x=>x.b.status==='on_hold');
+  const paidMonth=all.filter(x=>x.b.status==='paid'&&sameMonth(x.b.paidAt)).reduce((s,x)=>s+x.b.amt,0);
+  const agents=[['all',tx('admin.f.all')],...(myAgent()?[['me',myAgent().name]]:[]),...Object.entries(DEMO_AGENTS).map(([k,v])=>[k,v.name])];
+  const risky=allLeads().filter(l=>(l.riskFlags||[]).length);
+  const susp=['me',...Object.keys(DEMO_AGENTS)].filter(id=>id!=='me'||myAgent()).map(id=>({id,a:agentInfo(id),st:agentStats(id)})).filter(x=>x.st.suspended);
+  const num=(id,label,val)=>`<div class="f"><label for="${id}">${label}</label><input id="${id}" inputmode="numeric" value="${val}"></div>`;
+  $('#page').innerHTML=`
+  <div class="head"><div><h1>${tx('admin.title')}</h1><p class="muted" style="margin:6px 0 0">${tx('admin.sub')}</p></div></div>
+  <div class="agrid">
+    <section class="card acard">
+      <div class="sec-h"><h2>${tx('admin.programme')}</h2><span class="pill ${pc}">${pt}</span></div>
+      <div class="swrow"><div><b>${tx('admin.enabled')}</b> <span class="small muted num">lead_bonus_enabled</span><div class="small muted">${tx('admin.enabled_sub')}</div></div><button class="toggle ${a.lead_bonus_enabled?'on':''}" id="ad_enabled" aria-label="${tx('admin.enabled')}"></button></div>
+      <div class="swrow"><div><b>${tx('admin.starter')}</b> <span class="small muted num">starter_bonus_enabled</span><div class="small muted">${tx('admin.starter_sub')}</div></div><button class="toggle ${a.starter_bonus_enabled?'on':''}" id="ad_starter" aria-label="${tx('admin.starter')}" ${a.lead_bonus_enabled?'':'disabled'}></button></div>
+      <div class="grid2"><div class="f"><label for="ad_starts">${tx('admin.starts')}</label><input type="date" id="ad_starts" value="${toDateInput(a.lead_bonus_starts_at)}"></div><div class="f"><label for="ad_ends">${tx('admin.ends')}</label><input type="date" id="ad_ends" value="${toDateInput(a.lead_bonus_ends_at)}"></div></div>
+      <div class="small muted">${tx('admin.ends_hint')}</div>
+      <div style="border-top:1px solid var(--line-2);padding-top:12px"><b>${tx('admin.slot')}</b><div class="small muted">${tx('admin.slot_sub')}</div></div>
+      <div class="f"><label for="ad_slot_text">${tx('admin.slot_text')}</label><input id="ad_slot_text" value="${esc(sl.text||'')}" placeholder="e.g. Refinance month: free valuation for your clients"></div>
+      <div class="f"><label for="ad_slot_link">${tx('admin.slot_link')}</label><input id="ad_slot_link" value="${esc(sl.link||'')}" placeholder="https://lenty.com/…"></div>
+      <div class="grid2"><div class="f"><label for="ad_slot_from">${tx('admin.slot_from')}</label><input type="date" id="ad_slot_from" value="${toDateInput(sl.from)}"></div><div class="f"><label for="ad_slot_to">${tx('admin.slot_to')}</label><input type="date" id="ad_slot_to" value="${toDateInput(sl.to)}"></div></div>
+      <div><button class="btn btn-ink" id="ad_save_prog">${tx('admin.save_programme')}</button></div>
+    </section>
+    <section class="card acard">
+      <h2>${tx('admin.settings')}</h2><div class="small muted">${tx('admin.settings_sub')}</div>
+      <div class="grid3">${num('ad_bonus',tx('admin.bonus'),a.bonus_amount_aed)}${num('ad_starter_amt',tx('admin.starter_amt'),a.starter_bonus_amount_aed)}${num('ad_starter_n',tx('admin.starter_n'),a.starter_bonus_count)}${num('ad_limit',tx('admin.limit'),a.monthly_limit)}${num('ad_window',tx('admin.window'),a.cancel_window_days)}</div>
+      <div><button class="btn btn-ink" id="ad_save_set">${tx('admin.save_settings')}</button></div>
+      <div style="border-top:1px solid var(--line-2);padding-top:14px" class="stack"><h2 style="font-size:20px">${tx('admin.demo')}</h2><div class="small muted" style="margin:4px 0 10px">${tx('admin.demo_sub')}</div>
+        ${ui.resetConfirm?`<div class="note" style="background:var(--bad-soft);color:var(--bad)">${tx('admin.reset_confirm')}</div><div class="row" style="margin-top:8px"><button class="btn btn-bad" id="ad_reset_go">${tx('admin.reset_go')}</button><button class="btn btn-line" id="ad_reset_no">${tx('team.cancel')}</button></div>`:`<div><button class="btn btn-bad" id="ad_reset">${tx('admin.reset')}</button></div>`}</div>
+    </section>
+  </div>
+  <section class="card" style="overflow:hidden">
+    <div class="acard" style="padding-bottom:6px">
+      <div class="sec-h"><h2>${tx('admin.bonuses')}</h2><div class="row"><button class="btn btn-accent" id="ad_pay">${tx('admin.payout')}</button><button class="btn btn-line" id="ad_csv">${tx('admin.csv')}</button></div></div>
+      ${ui.payConfirm?(acc.length?`<div class="note">${tx('admin.payout_confirm',{n:acc.length,sum:aed(acc.reduce((s,x)=>s+x.b.amt,0))})}<span style="margin-left:auto" class="row"><button class="btn btn-accent" id="ad_pay_go">${tx('admin.payout_go')}</button><button class="btn btn-line" id="ad_pay_no">${tx('team.cancel')}</button></span></div>`:`<div class="note">${tx('admin.payout_none')}</div>`):''}
+      <div class="grid3"><div class="stat"><span class="small muted">${tx('admin.stat.review')}</span><b class="num">${rev.length} · ${aed(rev.reduce((s,x)=>s+x.b.amt,0))}</b></div><div class="stat"><span class="small muted">${tx('admin.stat.accrued')}</span><b class="num">${acc.length} · ${aed(acc.reduce((s,x)=>s+x.b.amt,0))}</b></div><div class="stat"><span class="small muted">${tx('admin.stat.paid')}</span><b class="num">${aed(paidMonth)}</b></div></div>
+      <div class="row">
+        <div class="f"><label for="bf_agent">${tx('admin.f.agent')}</label><select id="bf_agent">${agents.map(([k,v])=>`<option value="${k}" ${ui.bf.agent===k?'selected':''}>${esc(v)}</option>`).join('')}</select></div>
+        <div class="f"><label for="bf_status">${tx('admin.f.status')}</label><select id="bf_status"><option value="all">${tx('admin.f.all')}</option>${Object.entries(STATUS_TXT).map(([k,v])=>`<option value="${k}" ${ui.bf.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
+        <div class="f"><label for="bf_period">${tx('admin.f.period')}</label><select id="bf_period"><option value="all">${tx('admin.f.all')}</option><option value="month" ${ui.bf.period==='month'?'selected':''}>${tx('admin.f.month')}</option></select></div>
+      </div>
+    </div>
+    <div class="btable">
+      <div class="brow2 h"><span>${tx('admin.col.agent')}</span><span>${tx('admin.col.client')}</span><span>${tx('admin.col.amount')}</span><span>${tx('admin.col.status')}</span><span>${tx('admin.col.accrued')}</span><span>${tx('admin.col.paid')}</span><span>${tx('admin.col.actions')}</span></div>
+      ${fb.length?fb.map(x=>bonusRow(x)).join(''):`<div class="empty">${tx('admin.empty')}</div>`}
+    </div>
+  </section>
+  <section class="card acard">
+    <h2>${tx('admin.risk')}</h2><div class="small muted">${tx('admin.risk_sub')}</div>
+    ${susp.map(x=>`<div class="note" style="background:var(--warn-soft);color:var(--warn)">⚠ <span>${tx('admin.suspended',{name:esc(x.a.name),pct:x.st.rejectPct})}</span></div>`).join('')}
+    ${risky.length?risky.map(l=>{const s=state(l),open=s==='consent_pending'||s==='in_qualification';return `<div class="swrow" style="border-top:1px solid var(--line-2);padding-top:10px"><div><b>${esc(l.first+' '+(l.last||''))}</b> <span class="small muted">· ${esc(agentInfo(l.agent).name)}</span><div class="small">${l.riskFlags.map(f=>`<span class="tag risk">${tx('team.risk.'+f)}</span>`).join(' ')} <span class="muted">${{consent_pending:'Waiting for consent',in_qualification:'In qualification',qualified:'Qualified',rejected:'Rejected',expired:'Expired'}[s]}${l.bonus?' · bonus '+STATUS_TXT[l.bonus.status]:''}</span></div></div>${open||s==='qualified'?`<button class="btn btn-bad" data-fraud="${l.src}|${l.id}">${tx('admin.reject_fraud')}</button>`:''}</div>`}).join(''):`<div class="small muted">${tx('admin.risk_none')}</div>`}
+  </section>`;
+  bindAdmin();
+}
+function bonusRow(x){const {l,b,a}=x,key=l.src+'|'+l.id,left=windowLeft(b),canCancel=b.status!=='cancelled'&&left>0;
+  const acts=b.status==='cancelled'?`<span class="small muted">${esc(b.cancelReason||'')}${b.deducted?' · deducted':''}</span>`:
+    `${b.status==='on_hold'?`<button class="btn btn-accent" data-approve="${key}">${tx('admin.approve')}</button>`:''}${canCancel?`<button class="btn btn-bad" data-cancel="${key}">${tx('admin.cancel')}</button><span class="small muted">${tx('admin.window_left',{n:left})}</span>`:`<span class="small muted">${tx('admin.window_closed')}</span>`}`;
+  const form=ui.cancel===key?`<div class="brow2" style="background:var(--bad-soft)"><span style="grid-column:1/-1" class="row">
+      <span class="f"><label for="cx_reason">${tx('admin.cancel_reason')}</label><select id="cx_reason">${FRAUD_REASONS.map(r=>`<option value="${r}">${tx('admin.fraud.'+r)}</option>`).join('')}</select></span>
+      <span class="f" style="flex:1;min-width:200px"><label for="cx_note">${tx('admin.cancel_note')}</label><input id="cx_note"></span>
+      <button class="btn btn-bad" id="cx_go" data-key="${key}">${tx('admin.cancel_go')}</button><button class="btn btn-line" id="cx_no">${tx('admin.keep')}</button>
+      ${b.status==='paid'?`<span class="small" style="flex-basis:100%">${tx('admin.deduct')}</span>`:''}</span></div>`:'';
+  return `<div class="brow2"><span><b style="font-weight:600">${esc(a.name)}</b><span class="small muted" style="display:block">${esc(a.agency)}</span></span><span>${esc(l.first+' '+(l.last||''))}${(l.riskFlags||[]).length?' <span class="tag risk">Risk</span>':''}</span>
+    <span class="num"><b>${aed(b.amt)}</b>${b.starter?' <span class="tag">starter</span>':''}</span><span><span class="pill ${STATUS_CLS[b.status]}">${STATUS_TXT[b.status]}</span></span>
+    <span class="small num">${b.at?date(b.at):'—'}</span><span class="small num">${b.paidAt?date(b.paidAt):'—'}</span><span class="row">${acts}</span></div>${form}`}
+function bindAdmin(){
+  const on=(id,ev,fn)=>{const e=document.getElementById(id);if(e)e.addEventListener(ev,fn)};
+  on('ad_enabled','click',()=>{saveAdmin({lead_bonus_enabled:!ADMIN.lead_bonus_enabled});toast(tx('admin.saved'));render()});
+  on('ad_starter','click',()=>{saveAdmin({starter_bonus_enabled:!ADMIN.starter_bonus_enabled});toast(tx('admin.saved'));render()});
+  on('ad_save_prog','click',()=>{saveAdmin({lead_bonus_starts_at:fromDateInput($('#ad_starts').value),lead_bonus_ends_at:fromDateInput($('#ad_ends').value),
+    promo_slot:{text:$('#ad_slot_text').value.trim(),link:$('#ad_slot_link').value.trim(),from:fromDateInput($('#ad_slot_from').value),to:fromDateInput($('#ad_slot_to').value)}});toast(tx('admin.saved'));render()});
+  on('ad_save_set','click',()=>{const v=id=>Math.max(0,num($('#'+id).value));saveAdmin({bonus_amount_aed:v('ad_bonus'),starter_bonus_amount_aed:v('ad_starter_amt'),starter_bonus_count:v('ad_starter_n'),monthly_limit:v('ad_limit'),cancel_window_days:v('ad_window')});toast(tx('admin.saved'));render()});
+  ['agent','status','period'].forEach(k=>on('bf_'+k,'change',e=>{ui.bf[k]=e.target.value;render()}));
+  on('ad_pay','click',()=>{ui.payConfirm=true;render()});on('ad_pay_no','click',()=>{ui.payConfirm=false;render()});
+  on('ad_pay_go','click',()=>{const acc=bonuses().filter(x=>x.b.status==='accrued');const now=Date.now();let sum=0;
+    acc.forEach(x=>{sum+=x.b.amt;mutate(x.l.src,x.l.id,d=>{d.bonus.status='paid';d.bonus.paidAt=now},tx('agent.msg.bonus_paid',{amount:aed(x.b.amt)}))});
+    ui.payConfirm=false;toast(tx('admin.payout_done',{n:acc.length,sum:aed(sum)}));render()});
+  on('ad_csv','click',exportCsv);
+  on('ad_reset','click',()=>{ui.resetConfirm=true;render()});on('ad_reset_no','click',()=>{ui.resetConfirm=false;render()});
+  on('ad_reset_go','click',()=>{[AGENT_KEY,TEAM_KEY,ADMIN_KEY,'lenty-team-me'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});ui.resetConfirm=false;ui.sel=null;applyAdmin();team();expireAll();render();toast('Demo data reset')});
+  document.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>{const [src,id]=b.dataset.approve.split('|');const l=allLeads().find(x=>x.id===id);
+    mutate(src,id,d=>{d.bonus.status='accrued';d.bonus.approvedAt=Date.now()},tx('agent.msg.bonus_approved',{amount:aed(l.bonus.amt)}));toast('Bonus approved');render()}));
+  document.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',()=>{ui.cancel=b.dataset.cancel;render()}));
+  on('cx_no','click',()=>{ui.cancel=null;render()});
+  on('cx_go','click',e=>{const [src,id]=e.currentTarget.dataset.key.split('|');const l=allLeads().find(x=>x.id===id);const reason=tx('admin.fraud.'+$('#cx_reason').value),note=$('#cx_note').value.trim();const wasPaid=l.bonus.status==='paid';
+    mutate(src,id,d=>{d.bonus.status='cancelled';d.bonus.cancelledAt=Date.now();d.bonus.cancelReason=reason+(note?' ('+note+')':'');d.bonus.deducted=wasPaid},tx(wasPaid?'agent.msg.bonus_deducted':'agent.msg.bonus_cancelled',{amount:aed(l.bonus.amt),reason}));ui.cancel=null;toast('Bonus cancelled');render()});
+  document.querySelectorAll('[data-fraud]').forEach(b=>b.addEventListener('click',()=>{const [src,id]=b.dataset.fraud.split('|');const l=allLeads().find(x=>x.id===id);const now=Date.now();
+    /* spec: fraud rejection is admin-only; the bonus is cancelled by the cancellation rules (within the window; deducted if already paid) */
+    const bo=l.bonus&&l.bonus.status!=='cancelled'?l.bonus:null,canCancel=bo&&windowLeft(bo)>0,wasPaid=bo&&bo.status==='paid';
+    mutate(src,id,d=>{d.status='lost';d.q.reason='fraud';d.q.rejectedAt=now;d.q.by='admin';
+      if(canCancel){d.bonus.status='cancelled';d.bonus.cancelledAt=now;d.bonus.cancelReason=tx('admin.fraud.lead');d.bonus.deducted=wasPaid}},
+      tx('agent.msg.rejected',{reason:REASONS.fraud})+(canCancel?' '+tx(wasPaid?'agent.msg.fraud_bonus_deducted':'agent.msg.fraud_bonus_cancelled',{amount:aed(bo.amt)}):''));
+    toast(canCancel?'Lead rejected as fraud, bonus cancelled':bo?'Lead rejected as fraud. Cancellation window closed, bonus kept':'Lead rejected as fraud');render()}));
+}
+function exportCsv(){
+  const rows=[['lead_id','agent','agency','client','amount_aed','is_starter','status','created_at','approved_at','paid_at','cancelled_at','cancel_reason','deducted']];
+  const iso=t=>t?new Date(t).toISOString():'';
+  filteredBonuses().forEach(({l,b,a})=>rows.push([l.id,a.name,a.agency,(l.first+' '+(l.last||'')).trim(),b.amt,b.starter?'yes':'no',b.status,iso(b.at),iso(b.approvedAt),iso(b.paidAt),iso(b.cancelledAt),b.cancelReason||'',b.deducted?'yes':'no']));
+  const csv=rows.map(r=>r.map(v=>{v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n');
+  try{const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='lenty-lead-bonuses-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast(`CSV with ${rows.length-1} bonuses downloaded`)}
+  catch(e){toast('Download is not available here')}
+  window.__lastCsv=csv;
+}
+
 /* ===================== Boot ===================== */
 const me=$('#me');me.innerHTML=ADVISORS.map(a=>`<option value="${a.id}" ${a.id===ui.me?'selected':''}>${a.n}</option>`).join('');
 me.addEventListener('change',()=>{ui.me=me.value;try{localStorage.setItem('lenty-team-me',ui.me)}catch(e){}});
-team();expireAll();render();
-window.addEventListener('storage',e=>{if(e.key===AGENT_KEY||e.key===TEAM_KEY){expireAll();const y=window.scrollY;render();window.scrollTo(0,y)}});
+applyAdmin();team();expireAll();render();
+window.addEventListener('storage',e=>{if(e.key===ADMIN_KEY)applyAdmin();if(e.key===AGENT_KEY||e.key===TEAM_KEY||e.key===ADMIN_KEY){expireAll();const y=window.scrollY;render();window.scrollTo(0,y)}});
 setInterval(()=>{if(expireAll())render()},60000);
 fetch('icon.svg').then(r=>r.text()).then(t=>{document.getElementById('lenty').innerHTML=[...t.matchAll(/<path d="([^"]+)"/g)].map(m=>`<path d="${m[1]}"/>`).join('')}).catch(()=>{});
 </script>
