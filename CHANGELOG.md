@@ -1,13 +1,13 @@
 # Lenty Partners — версії
 
-Сайт завжди показує робочу версію: https://lentymortgage.github.io/lenty-partners/
+Сайт завжди показує робочу версію: https://lenty-mortgage.github.io/lenty-partners/
 Попередні версії не мають окремих адрес: вони збережені мітками (tags) в історії GitHub, і до будь-якої можна повернутися.
 
 | Версія | Де знайти | Статус |
 |---|---|---|
-| v1.02 | https://lentymortgage.github.io/lenty-partners/ | робоча, сюди йдуть усі зміни |
-| v1.01 | мітка `v1.01`: https://github.com/Lentymortgage/lenty-partners/tree/v1.01 | збережена в історії |
-| v1.0 | мітка `v1.0`: https://github.com/Lentymortgage/lenty-partners/tree/v1.0 | збережена в історії |
+| v1.02 | https://lenty-mortgage.github.io/lenty-partners/ | робоча, сюди йдуть усі зміни |
+| v1.01 | мітка `v1.01`: https://github.com/Lenty-Mortgage/lenty-partners/tree/v1.01 | збережена в історії |
+| v1.0 | мітка `v1.0`: https://github.com/Lenty-Mortgage/lenty-partners/tree/v1.0 | збережена в історії |
 
 ## v1.02 (в роботі) — 3 жовтня 2026
 - Оплата за кваліфікований лід за ТЗ docs/specs/qualified-lead.md: AED 100 за кваліфікованого клієнта, AED 150 за кожного з перших 3 для нового агента, акція для подань до 30 листопада 2026.
