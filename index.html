@@ -349,8 +349,8 @@ const TXT={
   "core.closed_review.status":"Closed after review",
   "core.closed_review.text":"This lead was closed after a review by Lenty. It doesn't earn a lead bonus and isn't protected. Contact the partner team if you have questions.",
   "core.assess.min_down":"Down payment is below the {min}% minimum for a {res}",
-  "core.duplicate.toast":"Duplicate client: already referred to Lenty in the last 90 days",
-  "core.duplicate.update":"Not qualified: Duplicate client. This client was already referred to Lenty in the last 90 days.",
+  "core.duplicate.own":"You already referred {client} on {date}. We're working on that referral.",
+  "core.duplicate.other":"This client is already registered with Lenty, so this referral isn't protected and doesn't earn a lead bonus.",
   "core.programme.no_end":"further notice",
   "promo.lead_bonus.line.limit":"Monthly limit reached. This lead won't earn a bonus.",
   "promo.lead_bonus.line.not_eligible":"Referred while the bonus programme was off. No lead bonus.",
@@ -718,7 +718,7 @@ deal(){
       <div style="height:6px;border-radius:3px;background:var(--line-2);overflow:hidden"><div style="height:100%;width:${prog}%;background:${d.status==='paid'?'var(--good)':'var(--accent)'}"></div></div>
       <span class="small muted">${payLine}</span>
     </div>
-    ${d.q&&d.q.reason==='fraud'?`<div class="verdict bad"><span class="v" style="font-size:22px">${tx('core.closed_review.status')}</span><span class="body" style="color:var(--ink-2)">${tx('core.closed_review.text')}</span></div>`:d.q&&d.q.reason?`<div class="verdict bad" data-chg="2"><span class="v" style="font-size:22px">Not qualified</span><span class="body" style="color:var(--ink-2)">Reason: ${REASONS[d.q.reason]}. You keep the lead protection for 90 days. If ${esc(d.first)}'s numbers change, refer again.</span></div>`:''}
+    ${d.q&&d.q.reason==='duplicate'?`<div class="verdict bad"><span class="v" style="font-size:22px">Not qualified</span><span class="body" style="color:var(--ink-2)">${esc(dupText(d))}</span></div>`:d.q&&d.q.reason==='fraud'?`<div class="verdict bad"><span class="v" style="font-size:22px">${tx('core.closed_review.status')}</span><span class="body" style="color:var(--ink-2)">${tx('core.closed_review.text')}</span></div>`:d.q&&d.q.reason?`<div class="verdict bad" data-chg="2"><span class="v" style="font-size:22px">Not qualified</span><span class="body" style="color:var(--ink-2)">Reason: ${REASONS[d.q.reason]}. You keep the lead protection for 90 days. If ${esc(d.first)}'s numbers change, refer again.</span></div>`:''}
     <div class="card pad"><div class="row between" style="margin-bottom:6px"><span class="label">Journey to the keys</span><span class="small muted">${all?'8':Math.min(d.stage+1,8)} of 8</span></div>${tl}${bonusLine(d)}</div>
     <div class="card" style="overflow:hidden">
       <div class="item"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">Mortgage advisor · ${a.l.join(', ')}</span></span><button class="iconbtn" style="color:#16a34a" onclick="toast('Opening WhatsApp with ${esc(a.n.split(' ')[0])}')" aria-label="WhatsApp">${I.wa}</button></div>
@@ -1061,10 +1061,12 @@ function submitRefer(){
   const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PROMO&&now<PROGRAMME_END,terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER,starterEnabled:!!ADMIN.starter_bonus_enabled},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
   /* spec: a duplicate (same phone, email or Emirates ID already in the system within 90 days, any agent) is rejected right after submission */
   const dup=findDuplicate(d);
-  if(dup){d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.updates.push({at:now,t:tx('core.duplicate.update')})}
+  if(dup){const own=(S.deals||[]).some(x=>x.id===dup.id);d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.q.dupOwn=own;if(own)d.q.dupDate=dup.createdAt;d.updates.push({at:now,t:dupText(d)})}
   S.deals.push(d);save();$('#r_next').textContent='Sending…';
-  setTimeout(()=>{if(dup){go('deal',{id:d.id});toast(tx('core.duplicate.toast'))}else go('done',{id:d.id})},600);
+  setTimeout(()=>{if(dup){go('deal',{id:d.id});toast(dupText(d))}else go('done',{id:d.id})},600);
 }
+/* spec: duplicates never promise lead protection and never reveal who referred the client */
+function dupText(d){return d.q&&d.q.dupOwn?tx('core.duplicate.own',{client:d.first,date:date(d.q.dupDate||d.createdAt)}):tx('core.duplicate.other')}
 const TEAM_KEY='lenty-team-v1.02'; /* demo leads of other agents (consultant page), same browser */
 const phoneKey=(cc,ph)=>String((cc||'')+(ph||'')).replace(/\D/g,'');
 /* Monthly counter and "new agent" from the agent's own data (spec: bonuses created this month count towards the limit, starters included) */

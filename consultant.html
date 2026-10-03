@@ -210,6 +210,8 @@ const TXT={
   "agent.msg.qualified.not_eligible":"Qualified. Referred while the bonus programme was off, so no lead bonus.",
   "agent.msg.qualified.plain":"Qualified. Lenty is now matching banks for {client}.",
   "agent.msg.rejected":"Not qualified: {reason}. You keep the lead protection for 90 days.",
+  "agent.msg.duplicate_own":"You already referred {client} on {date}. We're working on that referral.",
+  "agent.msg.duplicate_other":"This client is already registered with Lenty, so this referral isn't protected and doesn't earn a lead bonus.",
   "agent.msg.expired":"Not qualified within 14 days. The lead expired.",
 };
 function tx(k,v={}){const s=TXT[k];if(s==null)return k;return s.replace(/\{(\w+)\}/g,(m,n)=>n in v?v[n]:m)}
@@ -320,6 +322,8 @@ function findDuplicate(l){
     if(pk&&digits((x.cc||'')+(x.phone||''))===pk)return {lead:x,by:'phone'};
     if(em&&(x.email||'').trim().toLowerCase()===em)return {lead:x,by:'email'}}
   return null}
+/* what the agent is told about a duplicate: no lead protection, and never who referred the client */
+function dupMsg(l,own,at){return own?tx('agent.msg.duplicate_own',{client:l.first,date:new Date(at||l.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}):tx('agent.msg.duplicate_other')}
 function ready(l){const q=l.q;return q.consent&&(q.assess==='yes'||q.assess==='borderline')&&q.docs}
 function decideBy(l){const q=l.q;if(!ready(l))return null;return addWorkingDays(Math.max(q.consentAt||0,q.docsAt||0,q.assessAt||0,l.createdAt),SETTINGS.decision_working_days)}
 
@@ -472,12 +476,14 @@ async function act(a,l){
     const eid=($('#a_eid')||{value:''}).value.trim();
     /* spec: duplicate by phone, email or Emirates ID among all leads in the last 90 days -> rejected automatically */
     const dup=findDuplicate(Object.assign({},l,{q:Object.assign({},l.q,{eid})}));
-    if(dup){mutate(src,id,d=>{d.q.eid=eid;d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS.duplicate}));
+    if(dup){const own=dup.lead.agent===l.agent;mutate(src,id,d=>{d.q.eid=eid;d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.q.by=ui.me;d.q.dupOwn=own;if(own)d.q.dupDate=dup.lead.createdAt},dupMsg(l,own,dup.lead.createdAt));
       delete ui.docs[id];toast(tx('team.toast.duplicate',{client:cl,other:dup.lead.first+' '+(dup.lead.last||''),by:dup.by}));render();return}
     mutate(src,id,d=>{d.q.docs=true;d.q.docsAt=now;d.q.docsBy=ui.me;if(eid)d.q.eid=eid},tx('agent.msg.docs',{client:cl}));delete ui.docs[id];toast(tx('team.toast.docs',{client:cl}))}
   if(a==='reject'){ui.reject=true;ui.reason='';render();return}
   if(a==='reject-cancel'){ui.reject=false;render();return}
-  if(a==='reject-go'){const r=ui.reason;if(!r)return;mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS[r]}));ui.reject=false;toast(tx('team.toast.rejected',{client:cl,reason:REASONS[r]}))}
+  if(a==='reject-go'){const r=ui.reason;if(!r)return;
+    if(r==='duplicate'){const m=findDuplicate(l),own=!!(m&&m.lead.agent===l.agent);mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me;d.q.dupOwn=own;if(own)d.q.dupDate=m.lead.createdAt},dupMsg(l,own,m&&m.lead.createdAt))}
+    else mutate(src,id,d=>{d.status='lost';d.q.reason=r;d.q.rejectedAt=now;d.q.by=ui.me},tx('agent.msg.rejected',{reason:REASONS[r]}));ui.reject=false;toast(tx('team.toast.rejected',{client:cl,reason:REASONS[r]}))}
   if(a==='confirm'){
     const fresh=allLeads().find(x=>x.id===id);if(!fresh||!ready(fresh))return;
     const res=decideBonus(fresh);const k=b=>tx(b.starter?'team.kind.starter':'team.kind.regular');

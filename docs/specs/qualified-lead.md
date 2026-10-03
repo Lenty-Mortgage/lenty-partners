@@ -174,6 +174,8 @@ on_hold / accrued / paid ──(шахрайство, до 30 днів)──►
 | Лід не кваліфіковано | Not qualified · Reason: {reason}. You keep the lead protection for 90 days. |
 | Лід закрито після перевірки (причина fraud; слово «Fraud» агенту не показується), статус | Closed after review |
 | Лід закрито після перевірки, текст для агента | This lead was closed after a review by Lenty. It doesn't earn a lead bonus and isn't protected. Contact the partner team if you have questions. |
+| Дубль власного ліда цього ж агента (без обіцянки захисту) | You already referred {Client} on {date}. We're working on that referral. |
+| Дубль: клієнта подав інший агент або клієнт уже працює з Lenty напряму (без обіцянки захисту; агенту не показується, хто саме подав клієнта) | This client is already registered with Lenty, so this referral isn't protected and doesn't earn a lead bonus. |
 
 ## Інтерфейс консультанта й адміна
 
