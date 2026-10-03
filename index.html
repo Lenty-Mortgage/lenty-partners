@@ -295,7 +295,91 @@ const I={
 /* ================= Reference data ================= */
 const RATE=0.003, PAYOUT_DAYS=45, DAY=864e5;
 let PROMO=true;
-const BONUS=100, STARTER=150, STARTER_N=3, LIMIT=10, QDAYS=14;
+/* Settings (the spec's configuration table): amounts and limits live here, separate from texts */
+const SETTINGS={bonus_amount_aed:100,starter_bonus_amount_aed:150,starter_bonus_count:3,monthly_limit:10,qualification_days:14,cancel_window_days:30,lead_bonus_ends:'30 Nov 2026',lead_bonus_ends_long:'30 November 2026'};
+const BONUS=SETTINGS.bonus_amount_aed, STARTER=SETTINGS.starter_bonus_amount_aed, STARTER_N=SETTINGS.starter_bonus_count, LIMIT=SETTINGS.monthly_limit, QDAYS=SETTINGS.qualification_days;
+/* Interface texts for the lead bonus feature (translation keys from the spec).
+   promo.lead_bonus.* = promo layer, hidden when the programme is off; core.* = always on, two variants where the spec asks for them. */
+const TXT={
+  "core.stage.qualification.with_bonus":"Consent, affordability, documents and a call with your advisor. Your lead bonus is accrued when all four are done.",
+  "core.stage.qualification.no_bonus":"Consent, affordability, documents and a call with your advisor.",
+  "core.phase.qualification.no_bonus":"Lenty advisor checks the basics",
+  "core.done.qualification.with_bonus":"Qualification done: {bonusAed} lead bonus, paid with your weekly payout",
+  "core.done.qualification.no_bonus":"Qualification: documents and a call with your advisor",
+  "core.assess.no.with_bonus":"Unlikely to qualify, no lead bonus",
+  "core.assess.no.no_bonus":"Unlikely to qualify",
+  "promo.lead_bonus.phase_subtitle":"Your lead bonus",
+  "promo.lead_bonus.banner":"Earn AED {bonus} for every qualified client",
+  "promo.lead_bonus.banner_starter":"Earn AED {starter} for each of your first {starterN} qualified clients",
+  "promo.lead_bonus.banner_sub":"On top of your 0.3% commission",
+  "promo.lead_bonus.how_link":"How it works",
+  "promo.lead_bonus.title":"Lead bonus",
+  "promo.lead_bonus.starter_suffix":" · starter",
+  "promo.lead_bonus.not_qualified":"Not qualified: {reason}",
+  "promo.lead_bonus.no_bonus":"No bonus",
+  "promo.lead_bonus.status.on_hold":"On review",
+  "promo.lead_bonus.status.accrued":"Accrued",
+  "promo.lead_bonus.status.paid":"Paid",
+  "promo.lead_bonus.status.cancelled":"Cancelled",
+  "promo.lead_bonus.line.paid":"Paid {date}",
+  "promo.lead_bonus.line.accrued":"Accrued {date} · paid with your weekly payout",
+  "promo.lead_bonus.line.on_hold":"We're checking this lead. The bonus is accrued once the check is done.",
+  "promo.lead_bonus.line.cancelled":"Cancelled",
+  "promo.lead_bonus.line.pending":"Accrued when qualification is done · {n} days left",
+  "promo.lead_bonus.attention_suffix":"{bonusAed} bonus when done.",
+  "promo.lead_bonus.summary_not_this_month":"Not this month",
+  "promo.lead_bonus.summary_when_qualified":"when qualified",
+  "promo.lead_bonus.limit_title":"Monthly limit reached.",
+  "promo.lead_bonus.limit_body":"This lead won't earn a bonus. Your commission is not affected.",
+  "promo.lead_bonus.counter":"Paid leads this month",
+  "promo.lead_bonus.counter_value":"3 of {limit}",
+  "promo.lead_bonus.link_hint":"Clients who sign up through your link earn you the same {bonusAed} lead bonus once they qualify.",
+  "promo.lead_bonus.terms.per_client":"Per qualified client",
+  "promo.lead_bonus.terms.first":"Your first {starterN} clients",
+  "promo.lead_bonus.terms.first_value":"AED {starter} each",
+  "promo.lead_bonus.terms.limit":"Limit",
+  "promo.lead_bonus.terms.limit_value":"{limit} paid leads a month",
+  "promo.lead_bonus.terms.paid":"Paid",
+  "promo.lead_bonus.terms.paid_value":"Weekly, on top of commission",
+  "promo.lead_bonus.terms.programme":"Programme",
+  "promo.lead_bonus.terms.programme_value":"Referrals until {ends}",
+  "promo.lead_bonus.wallet.title":"Lead bonuses",
+  "promo.lead_bonus.wallet.paid_total":"{amount} paid",
+  "promo.lead_bonus.wallet.filter_all":"All",
+  "promo.lead_bonus.wallet.starter":"Starter bonus",
+  "promo.lead_bonus.wallet.regular":"Lead bonus",
+  "promo.lead_bonus.wallet.line.paid":"paid {date}",
+  "promo.lead_bonus.wallet.line.accrued":"accrued {date}",
+  "promo.lead_bonus.wallet.line.on_hold":"on review since {date}",
+  "promo.lead_bonus.wallet.line.cancelled":"cancelled",
+  "promo.lead_bonus.wallet.empty":"No bonuses with this status.",
+  "promo.lead_bonus.wallet.note":"Paid weekly with your other payouts. Your 0.3% commission is never reduced.",
+  "promo.lead_bonus.agreement.p6":"<b>6. Lead bonus.</b> For clients referred until {endsLong}, Lenty pays AED {bonus} for every client who qualifies within {days} days: consent, affordability, documents and a call with a Lenty advisor. The partner's first {starterN} qualified clients earn AED {starter} each. Up to {limit} paid leads a month. The bonus is paid weekly, on top of the commission, and is kept if the deal does not close.",
+  "promo.lead_bonus.agreement.p7":"<b>7. Cancellation.</b> Lenty may cancel a lead bonus within {cancelDays} days of accrual only in a case of fraud. A paid bonus is then deducted from the partner's next payouts.",
+  "promo.lead_bonus.how.title":"How the lead bonus works",
+  "promo.lead_bonus.how.hero_label":"For every qualified client",
+  "promo.lead_bonus.how.hero_sub":"AED {starter} each for your first {starterN} · on top of your 0.3% commission",
+  "promo.lead_bonus.how.criteria_title":"A lead qualifies within {days} days when",
+  "promo.lead_bonus.how.step1":"Your client confirms consent",
+  "promo.lead_bonus.how.step1_sub":"Lenty sends them a link right after you refer.",
+  "promo.lead_bonus.how.step2":"The numbers work",
+  "promo.lead_bonus.how.step2_sub":"Debt payments up to 50% of income and the minimum down payment for their residency.",
+  "promo.lead_bonus.how.step3":"Documents arrive",
+  "promo.lead_bonus.how.step3_sub":"Passport, Emirates ID or visa, salary certificate. Your client sends them to the advisor.",
+  "promo.lead_bonus.how.step4":"A call with the advisor",
+  "promo.lead_bonus.how.step4_sub":"The advisor confirms your client really plans to buy.",
+  "promo.lead_bonus.how.programme":"Programme",
+  "promo.lead_bonus.how.programme_value":"Referrals until {ends}",
+  "promo.lead_bonus.how.paid":"Paid",
+  "promo.lead_bonus.how.paid_value":"Weekly, with your other payouts",
+  "promo.lead_bonus.how.limit":"Limit",
+  "promo.lead_bonus.how.limit_value":"{limit} paid leads a month",
+  "promo.lead_bonus.how.no_close":"Deal doesn't close",
+  "promo.lead_bonus.how.no_close_value":"You keep the bonus",
+  "promo.lead_bonus.how.not_counted":"Not counted",
+  "promo.lead_bonus.how.not_counted_value":"Duplicates, clients already with Lenty"
+};
+function tx(k,v){const s=TXT[k];if(s==null)return k;const d={bonus:BONUS,starter:STARTER,starterN:STARTER_N,limit:LIMIT,days:QDAYS,ends:SETTINGS.lead_bonus_ends,endsLong:SETTINGS.lead_bonus_ends_long,cancelDays:SETTINGS.cancel_window_days,...v};return s.replace(/\{(\w+)\}/g,(m,n)=>n in d?d[n]:m)}
 const QITEMS=['Consent','Assessment','Documents','Consultant call'];
 const REASONS={duplicate:'Duplicate client',assessment_no:"Doesn't meet affordability",no_response:'Client not responding',no_documents:'No documents within 14 days'};
 const COUNTRIES=[
@@ -314,7 +398,7 @@ const ADVISORS=[
 const LEGAL=[{id:'l1',n:'Mariam Al Suwaidi'},{id:'l2',n:'James Whitford'}];
 const LANGS=['English','Arabic','Russian','Ukrainian','Hindi','Urdu','French','German'];
 const STAGES=[
-  {t:'Qualification',p:0,eta:'Up to 14 days',d:'Consent, affordability, documents and a call with your advisor. Your lead bonus is accrued when all four are done.'},
+  {t:'Qualification',p:0,eta:'Up to 14 days',d:tx('core.stage.qualification.with_bonus')},
   {t:'Bank matching',p:1,eta:'24–48 hrs',d:'Rates pulled from 19 UAE banks; the best 3 are shortlisted.'},
   {t:'Pre-approval',p:1,eta:'3–5 days',d:'File submitted to the bank most likely to approve at the best rate.'},
   {t:'Valuation',p:1,eta:'2–4 days',d:'A bank-appointed valuer inspects the property.'},
@@ -323,7 +407,7 @@ const STAGES=[
   {t:'Transfer & disbursal',p:2,eta:'1 day',d:'Transfer at the trustee office; the bank releases the loan.'},
   {t:'Keys',p:3,eta:'Same day',d:'Your client gets the keys.'},
 ];
-const PHASES=[['Qualification','Your lead bonus'],['Mortgage','Lenty mortgage advisors'],['Legal','Lenty legal team · free for your client'],['Handover','']];
+const PHASES=[['Qualification',tx('promo.lead_bonus.phase_subtitle')],['Mortgage','Lenty mortgage advisors'],['Legal','Lenty legal team · free for your client'],['Handover','']];
 const DOCS=['Passport','UAE visa','Emirates ID','Salary certificate','6-month bank statements','Property MOU / Form F'];
 const TYPES=['Ready apartment','Ready villa / townhouse','Off-plan','Refinance','Buyout','Commercial'];
 const RES={national:'UAE National',resident:'UAE Resident',nonresident:'Non-resident'};
@@ -411,17 +495,17 @@ function qList(d){const q=d.q||{};const st=[q.consent,q.assess==='yes'||q.assess
   return `<div class="qlist">${QITEMS.map((t,i)=>`<div class="row"><span class="${st[i]?'ok':'no'}">${st[i]?I.check:''}</span><span class="grow"><b style="font-weight:600">${t}</b> <span class="muted">${sub[i]}</span></span></div>`).join('')}</div>`}
 function bonusLine(d){
   if(!PROMO&&!d.bonus)return '';
-  if(d.q&&d.q.reason)return `<div class="brow" data-chg="3"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">Lead bonus</b><span class="muted">Not qualified: ${REASONS[d.q.reason]}</span></span><span class="pill grey">No bonus</span></div>`;
-  if(d.bonus){const b=d.bonus;const lab={on_hold:'On review',accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'}[b.status];const k={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
-    return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">Lead bonus${b.starter?' · starter':''}</b><span class="muted">${b.status==='paid'?'Paid '+date(b.paidAt):b.status==='accrued'?'Accrued '+date(b.at)+' · paid with your weekly payout':b.status==='on_hold'?'We\'re checking this lead. The bonus is accrued once the check is done.':'Cancelled'}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
-  if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">Lead bonus</b><span class="muted">Accrued when qualification is done · ${qLeft(d)} days left</span></span><span class="serif num" style="font-size:20px">${aed(BONUS)}</span></div>`;
+  if(d.q&&d.q.reason)return `<div class="brow" data-chg="3"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.not_qualified',{reason:REASONS[d.q.reason]})}</span></span><span class="pill grey">${tx('promo.lead_bonus.no_bonus')}</span></div>`;
+  if(d.bonus){const b=d.bonus;const lab=tx('promo.lead_bonus.status.'+b.status);const k={on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status];
+    return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}${b.starter?tx('promo.lead_bonus.starter_suffix'):''}</b><span class="muted">${tx('promo.lead_bonus.line.'+b.status,{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span style="text-align:right"><span class="serif num" style="font-size:20px;display:block">${aed(b.amt)}</span><span class="pill ${k}">${lab}</span></span></div>`}
+  if(d.q&&!d.q.done)return `<div class="brow" data-chg="2"><span class="grow small"><b style="font-weight:600;font-size:14px;display:block">${tx('promo.lead_bonus.title')}</b><span class="muted">${tx('promo.lead_bonus.line.pending',{n:qLeft(d)})}</span></span><span class="serif num" style="font-size:20px">${aed(BONUS)}</span></div>`;
   return '';
 }
 function attention(){
   const out=[];
   S.deals.forEach(d=>{
     if(d.status==='active'&&d.q&&!d.q.done&&!d.q.consent)out.push({d,k:'warn',chg:1,t:`${esc(d.first)} hasn't confirmed consent yet`,s:`Ask ${esc(d.first)} to open the link from Lenty. ${qLeft(d)} days left to qualify.`});
-    if(d.status==='active'&&d.q&&!d.q.done&&d.q.consent)out.push({d,k:'info',chg:1,t:`${esc(d.first)}: qualification ${qDone(d)} of 4`,s:`Documents and a call with the advisor left.${PROMO?' '+aed(BONUS)+' bonus when done.':''}`});
+    if(d.status==='active'&&d.q&&!d.q.done&&d.q.consent)out.push({d,k:'info',chg:1,t:`${esc(d.first)}: qualification ${qDone(d)} of 4`,s:`Documents and a call with the advisor left.${PROMO?' '+tx('promo.lead_bonus.attention_suffix',{bonusAed:aed(BONUS)}):''}`});
     if(d.status==='active'&&d.stage>0&&d.stage<=3&&d.docs<6)out.push({d,k:'warn',t:`${esc(d.first)} still needs ${6-d.docs} document${6-d.docs>1?'s':''}`,s:'Send the upload link so the file is not delayed.'});
     if(d.status==='active'&&d.stage===5)out.push({d,k:'info',t:`Waiting for the developer NOC for ${esc(d.first)}`,s:'Lenty legal is chasing it. Usually 3–5 working days.'});
     if(d.status==='active'&&(d.stage===3||d.stage===4))out.push({d,k:'good',t:`${esc(d.first)} is pre-approved`,s:`Show properties up to ${short(d.price)}.`});
@@ -514,12 +598,12 @@ agreement(){
       <div class="kv"><span>Lead protection</span><span>90 days from referral</span></div>
       <div class="kv"><span>Cost to your client</span><span>AED 0</span></div>
     </div>
-    ${PROMO?'':'<!--'}<div class="card pad stack g4" data-chg="1"><span class="label" style="margin-bottom:2px">Lead bonus</span>
-      <div class="kv"><span>Per qualified client</span><span class="num">AED ${BONUS}</span></div>
-      <div class="kv"><span>Your first ${STARTER_N} clients</span><span class="num">AED ${STARTER} each</span></div>
-      <div class="kv"><span>Limit</span><span>${LIMIT} paid leads a month</span></div>
-      <div class="kv"><span>Paid</span><span>Weekly, on top of commission</span></div>
-      <div class="kv"><span>Programme</span><span>Referrals until 30 Nov 2026</span></div>
+    ${PROMO?'':'<!--'}<div class="card pad stack g4" data-chg="1"><span class="label" style="margin-bottom:2px">${tx('promo.lead_bonus.title')}</span>
+      <div class="kv"><span>${tx('promo.lead_bonus.terms.per_client')}</span><span class="num">AED ${BONUS}</span></div>
+      <div class="kv"><span>${tx('promo.lead_bonus.terms.first')}</span><span class="num">${tx('promo.lead_bonus.terms.first_value')}</span></div>
+      <div class="kv"><span>${tx('promo.lead_bonus.terms.limit')}</span><span>${tx('promo.lead_bonus.terms.limit_value')}</span></div>
+      <div class="kv"><span>${tx('promo.lead_bonus.terms.paid')}</span><span>${tx('promo.lead_bonus.terms.paid_value')}</span></div>
+      <div class="kv"><span>${tx('promo.lead_bonus.terms.programme')}</span><span>${tx('promo.lead_bonus.terms.programme_value')}</span></div>
     </div>${PROMO?'':'-->'}
     <button class="link" style="text-align:left" onclick="agreementSheet()">Read the full agreement</button>
     <button class="check ${ok?'on':''}" onclick="tmp.agree=!tmp.agree;render()"><span class="box">${I.check}</span><span>I have read and accept the Lenty referral agreement.</span></button>
@@ -634,8 +718,8 @@ refer(){
   const head=`<div class="px stack g12" style="flex:none;padding-bottom:12px"><div class="row between"><button class="back" onclick="${st>1?'refBack()':'cancelRefer()'}" aria-label="Back">${st>1?I.back:I.close}</button><span class="small muted">Step ${st} of 3</span></div><div class="steps"><i class="on"></i><i class="${st>1?'on':''}"></i><i class="${st>2?'on':''}"></i></div></div>`;
   const loan=f.price*(1-f.down/100);
   let body='';
-  const bon=tmp.starter?`Earn AED ${STARTER} for each of your first ${STARTER_N} qualified clients`:`Earn AED ${BONUS} for every qualified client`;
-  if(st===1)body=`${PROMO?`<div class="bonusbar" data-chg="1"><div class="aurora"></div><span class="grow" style="position:relative"><b>${bon}</b><span style="font-size:12.5px;color:rgba(255,255,255,.72)">On top of your 0.3% commission</span></span><button class="link" onclick="howSheet()">How it works</button></div>`:''}
+  const bon=tmp.starter?tx('promo.lead_bonus.banner_starter'):tx('promo.lead_bonus.banner');
+  if(st===1)body=`${PROMO?`<div class="bonusbar" data-chg="1"><div class="aurora"></div><span class="grow" style="position:relative"><b>${bon}</b><span style="font-size:12.5px;color:rgba(255,255,255,.72)">${tx('promo.lead_bonus.banner_sub')}</span></span><button class="link" onclick="howSheet()">${tx('promo.lead_bonus.how_link')}</button></div>`:''}
     <div class="stack g8"><h1 class="h1">Who are you referring?</h1><p class="body muted" style="margin:0">Their advisor will message them on WhatsApp within an hour.</p></div>
     <div><div class="f-label">First name</div><div class="field"><input id="r_first" autocomplete="off" value="${esc(f.first)}"></div></div>
     <div><div class="f-label">Last name <span class="opt">Optional</span></div><div class="field"><input id="r_last" autocomplete="off" value="${esc(f.last)}"></div></div>
@@ -656,9 +740,9 @@ refer(){
     <div><div class="f-label">Client's preferred language</div><div class="field"><select id="r_lang">${LANGS.map(l=>`<option ${f.lang===l?'selected':''}>${l}</option>`).join('')}</select>${I.down}</div></div>
     <button class="card pad row" style="text-align:left" onclick="advisorSheet()"><span class="avatar round">${ini(...a.n.split(' '))}</span><span class="grow"><span class="small muted">Mortgage advisor</span><span style="display:block;font-weight:600">${a.n}</span><span class="small muted">${a.l.join(', ')}</span></span><span class="link">Change</span></button>
     <div><div class="f-label">Notes for the advisor <span class="opt">Optional</span></div><textarea class="area" id="r_notes" placeholder="Viewing on Saturday, self-employed, wants a 5-year fixed rate…">${esc(f.notes)}</textarea></div>
-    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div>${PROMO?`<div class="kv" data-chg="1"><span>Lead bonus</span><span class="num">${tmp.limit?'<span class="muted" style="font-weight:500">Not this month</span>':aed(tmp.starter?STARTER:BONUS)+' <span class="muted" style="font-weight:400">when qualified</span>'}</span></div>`:''}</div>
+    <div class="card pad stack g4"><div class="kv"><span>Client</span><span>${esc(f.first+' '+f.last)}</span></div><div class="kv"><span>Loan</span><span class="num">${aed(loan)}</span></div><div class="kv"><span>Your commission</span><span class="num">${aed(loan*RATE)}</span></div>${PROMO?`<div class="kv" data-chg="1"><span>${tx('promo.lead_bonus.title')}</span><span class="num">${tmp.limit?'<span class="muted" style="font-weight:500">'+tx('promo.lead_bonus.summary_not_this_month')+'</span>':aed(tmp.starter?STARTER:BONUS)+' <span class="muted" style="font-weight:400">'+tx('promo.lead_bonus.summary_when_qualified')+'</span>'}</span></div>`:''}</div>
     <button class="check ${f.consent?'on':''}" data-chg="2" style="border-radius:10px" onclick="refSave();tmp.ref.consent=!tmp.ref.consent;render()"><span class="box">${I.check}</span><span>${esc(f.first)} agreed that Lenty can contact them. <span class="muted">We'll send them a link to confirm.</span></span></button>
-    ${!PROMO?'':tmp.limit?`<div class="sample" data-chg="3" style="background:var(--warn-soft);color:var(--warn)">${I.alert}<span><b>Monthly limit reached.</b> This lead won't earn a bonus. Your commission is not affected.</span></div>`:`<div class="card pad row between small" data-chg="3"><span class="muted">Paid leads this month</span><span class="num" style="font-weight:600">3 of ${LIMIT}</span></div>`}`;}
+    ${!PROMO?'':tmp.limit?`<div class="sample" data-chg="3" style="background:var(--warn-soft);color:var(--warn)">${I.alert}<span><b>${tx('promo.lead_bonus.limit_title')}</b> ${tx('promo.lead_bonus.limit_body')}</span></div>`:`<div class="card pad row between small" data-chg="3"><span class="muted">${tx('promo.lead_bonus.counter')}</span><span class="num" style="font-weight:600">${tx('promo.lead_bonus.counter_value')}</span></div>`}`;}
   const ok=st===1?(f.first.trim()&&f.phone.replace(/\D/g,'').length>=7):st===2?f.price>0:f.consent;
   return `<div class="view"><div class="top"></div>${head}<div class="scroll"><div class="px stack g16" style="padding-bottom:20px">${body}</div></div>
   <div class="px" style="padding-top:10px;padding-bottom:34px;flex:none;border-top:1px solid var(--line-2);background:var(--ground)"><button class="btn btn-ink" id="r_next" ${ok?'':'disabled'} onclick="${st<3?'refNext()':'submitRefer()'}">${st<3?'Continue':'Send to Lenty'}</button></div></div>`;
@@ -672,7 +756,7 @@ done(){
     <div style="width:72px;height:72px;border-radius:24px;background:var(--cream);color:var(--ink);display:grid;place-items:center">${I.checkLg}</div>
     <h1 class="serif" style="font-size:34px;line-height:1.1;margin:0">${esc(d.first)} is with Lenty now.</h1>
     <div class="stack g12">
-      ${[['Now',`We've sent ${esc(d.first)} a link to confirm consent. Next step: documents.`,1],['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 14 days',PROMO?`Qualification done: ${aed(BONUS)} lead bonus, paid with your weekly payout`:'Qualification: documents and a call with your advisor',2],['45 days after disbursal',`${aed(comm(d))} commission paid to you`]].map(([t,s,c])=>`<div ${c?'data-chg="'+c+'"':''} class="row" style="align-items:flex-start;gap:14px;border-radius:12px;margin:-4px -8px;padding:4px 8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
+      ${[['Now',`We've sent ${esc(d.first)} a link to confirm consent. Next step: documents.`,1],['Within 1 hour',`${a.n} messages ${esc(d.first)} on WhatsApp`],['Within 14 days',PROMO?tx('core.done.qualification.with_bonus',{bonusAed:aed(BONUS)}):tx('core.done.qualification.no_bonus'),2],['45 days after disbursal',`${aed(comm(d))} commission paid to you`]].map(([t,s,c])=>`<div ${c?'data-chg="'+c+'"':''} class="row" style="align-items:flex-start;gap:14px;border-radius:12px;margin:-4px -8px;padding:4px 8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--sand);margin-top:8px;flex:none"></span><span><span style="display:block;font-weight:600">${t}</span><span style="font-size:14px;color:rgba(255,255,255,.72)">${s}</span></span></div>`).join('')}
     </div>
     <div class="stack g10" style="margin-top:6px"><button class="btn btn-white" onclick="go('deal',{id:'${d.id}'})">Open deal</button><button class="btn" style="color:var(--cream)" onclick="go('today')">Back to Today</button></div>
   </div></div>`;
@@ -689,10 +773,10 @@ wallet(){
     </div>
     <div class="card pad row" style="gap:14px"><span class="serif num" style="font-size:28px;color:var(--accent-ink)">0.3%</span><span class="small muted">of the loan amount on every deal, paid ${PAYOUT_DAYS} days after the bank disburses the loan. Same rate for every partner.</span></div>
     ${(()=>{const bs=S.deals.filter(d=>d.bonus).map(d=>({d,...d.bonus})).sort((a,b)=>b.at-a.at);if(!bs.length&&!PROMO)return '';const f=tmp.bf||'all';const ls=bs.filter(b=>f==='all'||b.status===f);
-      return `<div class="stack g10" data-chg="1" style="margin:0 -8px;padding:8px;border-radius:18px"><div class="row between"><span class="label">Lead bonuses</span><span class="small muted num">${aed(bs.filter(b=>b.status==='paid').reduce((a,b)=>a+b.amt,0))} paid</span></div>
-      <div class="row" data-chg="2" style="gap:6px;border-radius:12px">${[['all','All'],['on_hold','On review'],['accrued','Accrued'],['paid','Paid'],['cancelled','Cancelled']].map(([k,l])=>`<button class="pill ${f===k?'':'grey'}" style="height:30px;padding:0 12px;font-size:12.5px;${f===k?'background:var(--ink);color:#fff':''}" onclick="tmp.bf='${k}';render()">${l}</button>`).join('')}</div>
-      <div class="card" style="overflow:hidden">${ls.length?ls.map(b=>`<button class="item" onclick="go('deal',{id:'${b.d.id}'})"><span class="grow"><span style="display:block;font-weight:600">${name(b.d)}</span><span class="small muted">${b.starter?'Starter bonus':'Lead bonus'} · ${b.status==='paid'?'paid '+date(b.paidAt):b.status==='accrued'?'accrued '+date(b.at):b.status==='on_hold'?'on review since '+date(b.at):'cancelled'}</span></span><span class="num" style="font-weight:700;text-align:right">${aed(b.amt)}<span style="display:block;margin-top:3px"><span class="pill ${{on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status]}">${{on_hold:'On review',accrued:'Accrued',paid:'Paid',cancelled:'Cancelled'}[b.status]}</span></span></span></button>`).join(''):'<div class="pad small muted">No bonuses with this status.</div>'}</div>
-      <span class="small muted">Paid weekly with your other payouts. Your 0.3% commission is never reduced.</span></div>`})()}
+      return `<div class="stack g10" data-chg="1" style="margin:0 -8px;padding:8px;border-radius:18px"><div class="row between"><span class="label">${tx('promo.lead_bonus.wallet.title')}</span><span class="small muted num">${tx('promo.lead_bonus.wallet.paid_total',{amount:aed(bs.filter(b=>b.status==='paid').reduce((a,b)=>a+b.amt,0))})}</span></div>
+      <div class="row" data-chg="2" style="gap:6px;border-radius:12px">${[['all',tx('promo.lead_bonus.wallet.filter_all')],...['on_hold','accrued','paid','cancelled'].map(k=>[k,tx('promo.lead_bonus.status.'+k)])].map(([k,l])=>`<button class="pill ${f===k?'':'grey'}" style="height:30px;padding:0 12px;font-size:12.5px;${f===k?'background:var(--ink);color:#fff':''}" onclick="tmp.bf='${k}';render()">${l}</button>`).join('')}</div>
+      <div class="card" style="overflow:hidden">${ls.length?ls.map(b=>`<button class="item" onclick="go('deal',{id:'${b.d.id}'})"><span class="grow"><span style="display:block;font-weight:600">${name(b.d)}</span><span class="small muted">${tx(b.starter?'promo.lead_bonus.wallet.starter':'promo.lead_bonus.wallet.regular')} · ${tx('promo.lead_bonus.wallet.line.'+b.status,{date:date(b.status==='paid'?b.paidAt:b.at)})}</span></span><span class="num" style="font-weight:700;text-align:right">${aed(b.amt)}<span style="display:block;margin-top:3px"><span class="pill ${{on_hold:'grey',accrued:'warn',paid:'good',cancelled:'bad'}[b.status]}">${tx('promo.lead_bonus.status.'+b.status)}</span></span></span></button>`).join(''):'<div class="pad small muted">'+tx('promo.lead_bonus.wallet.empty')+'</div>'}</div>
+      <span class="small muted">${tx('promo.lead_bonus.wallet.note')}</span></div>`})()}
     ${pay.length?`<div class="stack g10"><span class="label">Awaiting payout</span><div class="card" style="overflow:hidden">${pay.map(d=>row(d,date(payoutAt(d)),`Disbursed ${date(d.disbursedAt)} · ${daysLeft(d)} days left`)).join('')}</div></div>`:''}
     ${act.length?`<div class="stack g10"><span class="label">In pipeline</span><div class="card" style="overflow:hidden">${act.map(d=>row(d,'expected',`${STAGES[d.stage].t} · loan ${short(d.loan)}`)).join('')}</div></div>`:''}
     ${paid.length?`<div class="stack g10"><span class="label">Paid</span><div class="card" style="overflow:hidden">${paid.map(d=>row(d,date(d.paidAt),`Loan ${short(d.loan)}`)).join('')}</div></div>`:''}
@@ -800,7 +884,7 @@ link(){
     <div class="card pad row"><span class="grow num" style="font-weight:600;word-break:break-all">${refLink()}</span><button class="btn btn-soft btn-sm" style="width:auto;padding:0 14px" onclick="copy('${url}','Link copied')">${I.copy} Copy</button></div>
     <div class="card pad stack g10"><span class="label">Message for WhatsApp</span><p class="body" id="wamsg" style="margin:0">Hi! For your mortgage I work with Lenty: free advice, 19 UAE banks compared, and their legal team handles the transfer. Get a free pre-approval here: ${url}</p>
     <button class="btn btn-line btn-sm" onclick="copy($('#wamsg').textContent,'Message copied')">${I.wa} Copy message</button></div>
-    ${PROMO?'':'<!--'}<div class="sample" data-chg="1">${I.spark}<span>Clients who sign up through your link earn you the same ${aed(BONUS)} lead bonus once they qualify.</span></div>${PROMO?'':'-->'}
+    ${PROMO?'':'<!--'}<div class="sample" data-chg="1">${I.spark}<span>${tx('promo.lead_bonus.link_hint',{bonusAed:aed(BONUS)})}</span></div>${PROMO?'':'-->'}
     <div class="card pad stack g4"><div class="kv"><span>Clients via your link</span><span class="num">${S.deals.filter(d=>d.viaLink).length}</span></div><div class="kv"><span>Lead protection</span><span>90 days</span></div><div class="kv" data-chg="2"><span>Qualified via your link</span><span class="num">0 of 1</span></div></div>
   </div><div style="height:40px"></div></div></div>`;
 },
@@ -846,7 +930,7 @@ account(){
 };
 function assess(f){const loan=f.price*(1-f.down/100),r=4.25/1200,n=300,pay=loan*r/(1-Math.pow(1+r,-n));if(!f.income)return null;const dbr=(f.debts+pay)/f.income*100;return {dbr,k:dbr<=42?'yes':dbr<=50?'borderline':'no'}}
 function assessCard(f){const a=assess(f);if(!a)return `<div class="small muted">Enter income to see if ${esc(f.first||'your client')} is likely to qualify.</div>`;
-  const m={yes:['good','Yes','Likely to qualify'],borderline:['warn','Borderline','Can still qualify. Your advisor will confirm'],no:['bad','No',PROMO?'Unlikely to qualify, no lead bonus':'Unlikely to qualify']}[a.k];
+  const m={yes:['good','Yes','Likely to qualify'],borderline:['warn','Borderline','Can still qualify. Your advisor will confirm'],no:['bad','No',PROMO?tx('core.assess.no.with_bonus'):tx('core.assess.no.no_bonus')]}[a.k];
   return `<div class="verdict ${m[0]}" style="padding:14px 16px;gap:2px"><span class="small" style="font-weight:600;color:var(--ink-2)">Assessment · DBR ${a.dbr.toFixed(0)}% of 50%</span><span class="v" style="font-size:22px">${m[1]}</span><span class="small" style="color:var(--ink-2)">${m[2]}</span></div>`}
 function dealRow(d){
   return `<button class="deal" onclick="go('deal',{id:'${d.id}'})">
@@ -972,16 +1056,16 @@ function agreementSheet(){
   <p style="margin:0"><b>4. Client cost.</b> Mortgage advice and legal support from Lenty are free for the client.</p>
   <p style="margin:0"><b>5. Consent.</b> The partner confirms the client agreed to be contacted by Lenty, and the client confirms it through a link from Lenty.</p>
   ${PROMO?'':'<!--'}<div class="stack g12" data-chg="1" style="margin:0 -8px;padding:8px;border-radius:12px">
-  <p style="margin:0"><b>6. Lead bonus.</b> For clients referred until 30 November 2026, Lenty pays AED ${BONUS} for every client who qualifies within 14 days: consent, affordability, documents and a call with a Lenty advisor. The partner's first ${STARTER_N} qualified clients earn AED ${STARTER} each. Up to ${LIMIT} paid leads a month. The bonus is paid weekly, on top of the commission, and is kept if the deal does not close.</p>
-  <p style="margin:0"><b>7. Cancellation.</b> Lenty may cancel a lead bonus within 30 days of accrual only in a case of fraud. A paid bonus is then deducted from the partner's next payouts.</p></div>${PROMO?'':'-->'}
+  <p style="margin:0">${tx('promo.lead_bonus.agreement.p6')}</p>
+  <p style="margin:0">${tx('promo.lead_bonus.agreement.p7')}</p></div>${PROMO?'':'-->'}
   <p class="small muted" style="margin:0">Summary for the prototype. The signed Lenty referral agreement prevails.</p></div></div>`,'tall');
 }
 function howSheet(){
-  const steps=[['Your client confirms consent','Lenty sends them a link right after you refer.'],['The numbers work','Debt payments up to 50% of income and the minimum down payment for their residency.'],['Documents arrive','Passport, Emirates ID or visa, salary certificate. Your client sends them to the advisor.'],['A call with the advisor','The advisor confirms your client really plans to buy.']];
-  sheet(sheetHead('How the lead bonus works')+`<div class="scroll" style="padding:0 20px 30px"><div class="stack g16">
-  <div class="hero" style="cursor:default"><div class="aurora"></div><div class="lbl">For every qualified client</div><div class="big num" style="margin-top:6px">AED ${BONUS}</div><div class="lbl" style="margin-top:6px">AED ${STARTER} each for your first ${STARTER_N} · on top of your 0.3% commission</div></div>
-  <div class="card pad"><span class="label">A lead qualifies within 14 days when</span><div style="margin-top:12px">${steps.map(([a,b],i)=>`<div class="tl"><div class="d" style="background:var(--ink);border-color:var(--ink);font-size:12px;font-weight:700">${i+1}</div><div class="grow"><div class="t1">${a}</div><div class="t2">${b}</div></div></div>`).join('')}</div></div>
-  <div class="card pad stack g4"><div class="kv"><span>Programme</span><span>Referrals until 30 Nov 2026</span></div><div class="kv"><span>Paid</span><span>Weekly, with your other payouts</span></div><div class="kv"><span>Limit</span><span>${LIMIT} paid leads a month</span></div><div class="kv"><span>Deal doesn't close</span><span>You keep the bonus</span></div><div class="kv"><span>Not counted</span><span>Duplicates, clients already with Lenty</span></div></div>
+  const steps=[1,2,3,4].map(i=>[tx('promo.lead_bonus.how.step'+i),tx('promo.lead_bonus.how.step'+i+'_sub')]);
+  sheet(sheetHead(tx('promo.lead_bonus.how.title'))+`<div class="scroll" style="padding:0 20px 30px"><div class="stack g16">
+  <div class="hero" style="cursor:default"><div class="aurora"></div><div class="lbl">${tx('promo.lead_bonus.how.hero_label')}</div><div class="big num" style="margin-top:6px">AED ${BONUS}</div><div class="lbl" style="margin-top:6px">${tx('promo.lead_bonus.how.hero_sub')}</div></div>
+  <div class="card pad"><span class="label">${tx('promo.lead_bonus.how.criteria_title')}</span><div style="margin-top:12px">${steps.map(([a,b],i)=>`<div class="tl"><div class="d" style="background:var(--ink);border-color:var(--ink);font-size:12px;font-weight:700">${i+1}</div><div class="grow"><div class="t1">${a}</div><div class="t2">${b}</div></div></div>`).join('')}</div></div>
+  <div class="card pad stack g4">${['programme','paid','limit','no_close','not_counted'].map(k=>`<div class="kv"><span>${tx('promo.lead_bonus.how.'+k)}</span><span>${tx('promo.lead_bonus.how.'+k+'_value')}</span></div>`).join('')}</div>
   </div></div>`,'tall');
 }
 function ibanSheet(){
@@ -1010,7 +1094,7 @@ const QP=new URLSearchParams(window.__Q||location.search);
   S.deals=sampleDeals();S.seen=Date.now()-2*DAY;
   tmp.phone='50 123 4567';tmp.auth={cc:'+971',phone:'50 123 4567'};
   tmp.prof={first:'Alex',last:'Morgan',agency:'Marina Homes Real Estate',brn:'41235'};tmp.agree=QP.get('agree')==='1';
-  PROMO=QP.get('promo')!=='0';if(!PROMO){STAGES[0].d='Consent, affordability, documents and a call with your advisor.';PHASES[0][1]='Lenty advisor checks the basics';}tmp.starter=QP.get('starter')==='1';tmp.limit=QP.get('limit')==='1';tmp.bf='all';
+  PROMO=QP.get('promo')!=='0';if(!PROMO){STAGES[0].d=tx('core.stage.qualification.no_bonus');PHASES[0][1]=tx('core.phase.qualification.no_bonus');}tmp.starter=QP.get('starter')==='1';tmp.limit=QP.get('limit')==='1';tmp.bf='all';
   const byName=n=>(S.deals.find(d=>d.first.toLowerCase()===String(n||'').toLowerCase())||S.deals[1]).id;
   const p={};
   if(sc==='deal')p.id=byName(QP.get('deal'));
