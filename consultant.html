@@ -211,7 +211,7 @@ const TXT={
   "agent.msg.qualified.plain":"Qualified. Lenty is now matching banks for {client}.",
   "agent.msg.rejected":"Not qualified: {reason}. You keep the lead protection for 90 days.",
   "agent.msg.duplicate_own":"You already referred {client} on {date}. We're working on that referral.",
-  "agent.msg.duplicate_other":"This client is already registered with Lenty, so this referral isn't protected and doesn't earn a lead bonus.",
+  "agent.msg.duplicate_other":"This client is already registered with Lenty, so this lead doesn't earn a bonus and isn't protected.",
   "agent.msg.expired":"Not qualified within 14 days. The lead expired.",
 };
 function tx(k,v={}){const s=TXT[k];if(s==null)return k;return s.replace(/\{(\w+)\}/g,(m,n)=>n in v?v[n]:m)}
