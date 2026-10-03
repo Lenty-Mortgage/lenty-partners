@@ -454,10 +454,10 @@ function sampleDeals(){
   const mk=(o)=>Object.assign({id:'d'+Math.random().toString(36).slice(2,8),cc:'+971',email:'',notes:'',docs:6,status:'active',sample:true,legal:'l1',updates:[]},o);
   return [
     mk({first:'Maria',last:'Santos',phone:'52 334 1189',type:'Ready apartment',area:'Dubai Marina',price:2400000,loan:1920000,residency:'resident',stage:0,advisor:'a4',docs:0,viaLink:true,createdAt:now-3*36e5,
-        q:{consent:true,method:'form',assess:'borderline',docs:false,call:false,deadline:now-3*36e5+QDAYS*DAY},
+        q:{consent:true,method:'form',assess:'borderline',dbr:48,docs:false,call:false,deadline:now-3*36e5+QDAYS*DAY},
         updates:[{n:1,at:now-3*36e5,t:'Maria signed up through your link and gave consent in the form.'}]}),
     mk({first:'Yusuf',last:'Karim',phone:'55 761 2093',type:'Ready apartment',area:'Downtown Dubai',price:2000000,loan:1600000,residency:'resident',stage:0,advisor:'a6',docs:1,createdAt:now-2*36e5,
-        q:{consent:false,assess:'yes',docs:false,call:false,deadline:now-2*36e5+QDAYS*DAY},
+        q:{consent:false,assess:'yes',dbr:31,docs:false,call:false,deadline:now-2*36e5+QDAYS*DAY},
         updates:[{at:now-2*36e5,t:'Referral received. Omar will call Yusuf within 1 hour.'},{n:1,at:now-1.6*36e5,t:'We sent Yusuf a link to confirm consent.'}]}),
     mk({first:'Khalid',last:'Al Mansoori',phone:'50 998 2210',type:'Ready villa / townhouse',area:'Mudon',price:3100000,loan:2480000,residency:'resident',stage:0,status:'lost',advisor:'a2',docs:0,createdAt:now-6*DAY,
         q:{consent:true,assess:'no',docs:false,call:true,reason:'assessment_no'},
@@ -524,7 +524,7 @@ function expireLeads(){let n=0;const now=Date.now();(S.deals||[]).forEach(d=>{if
 function qDone(d){const q=d.q||{};return [q.consent,q.assess==='yes'||q.assess==='borderline',q.docs,q.call].filter(Boolean).length}
 function qLeft(d){return Math.max(0,Math.ceil((d.q.deadline-Date.now())/DAY))}
 function qList(d){const q=d.q||{};const st=[q.consent,q.assess==='yes'||q.assess==='borderline',q.docs,q.call];
-  const sub=[q.consent?({form:'Given in your link form',whatsapp:'Replied YES on WhatsApp'}[q.method]||'Confirmed via link'):'Link sent to your client',q.assess?({yes:'Yes',borderline:'Borderline',no:'No'}[q.assess])+(q.assess==='yes'?' · DBR 31%':q.assess==='borderline'?' · DBR 48%':''):'Not entered',q.docs?'Received by your advisor':'Passport, Emirates ID, salary certificate',q.call?'Done':'Your advisor calls after documents'];
+  const sub=[q.consent?({form:'Given in your link form',whatsapp:'Replied YES on WhatsApp'}[q.method]||'Confirmed via link'):'Link sent to your client',q.assess?({yes:'Yes',borderline:'Borderline',no:'No'}[q.assess])+(q.dbr!=null?' · DBR '+Math.round(q.dbr)+'%':''):'Not entered',q.docs?'Received by your advisor':'Passport, Emirates ID, salary certificate',q.call?'Done':'Your advisor calls after documents'];
   return `<div class="qlist">${QITEMS.map((t,i)=>`<div class="row"><span class="${st[i]?'ok':'no'}">${st[i]?I.check:''}</span><span class="grow"><b style="font-weight:600">${t}</b> <span class="muted">${sub[i]}</span></span></div>`).join('')}</div>`}
 function bonusLine(d){
   if(!PROMO&&!d.bonus)return '';
@@ -728,7 +728,7 @@ deal(){
       <div class="row between"><span class="label">Client documents</span><span class="small num" style="font-weight:600">${d.docs} of 6</span></div>
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">${DOCS.map((_,i)=>`<i style="height:6px;border-radius:3px;background:${i<d.docs?'var(--good)':'var(--line)'}"></i>`).join('')}</div>
       <div class="stack g4">${DOCS.map((x,i)=>`<div class="row small" style="gap:8px"><span style="color:${i<d.docs?'var(--good)':'#c9c4b4'};display:grid">${I.check}</span><span class="${i<d.docs?'':'muted'}">${x}</span></div>`).join('')}</div>
-      ${d.docs<6?`<button class="btn btn-soft btn-sm" onclick="copy('https://lenty.com/u/${d.id}','Upload link copied. Send it to ${esc(d.first)}')">${I.copy} Copy upload link for ${esc(d.first)}</button><span class="small muted">Your client uploads directly to Lenty. You only see progress, never the files.</span>`:''}
+      ${d.docs<6?`<button class="btn btn-soft btn-sm" onclick="copyUpload('${d.id}')">${I.copy} Copy upload link for ${esc(d.first)}</button><span class="small muted">Your client uploads directly to Lenty. You only see progress, never the files.</span>`:''}
     </div>
     <div class="card pad stack g12"><span class="label">Updates</span>
       ${[...d.updates].reverse().map(u=>`<div class="row" style="align-items:flex-start;gap:12px"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:7px;flex:none"></span><span class="grow"><span class="body" style="display:block">${esc(u.t)}</span><span class="small muted">${ago(u.at)}</span></span></div>`).join('')}
@@ -1033,13 +1033,14 @@ function verify(){
   const b=$('#confirm');if(!b||b.disabled)return;b.textContent='Verifying…';
   setTimeout(()=>{
     const cc=(tmp.cc||COUNTRIES[0]).c,phone=tmp.phone;
-    if(S.saved&&S.saved.phone===phone){S.user=S.saved;if(!S.deals.length)S.deals=sampleDeals();save();go('today');return}
+    if(S.saved&&phoneKey(S.saved.cc,S.saved.phone)===phoneKey(cc,phone)){S.user=S.saved;if(!S.deals.length)S.deals=sampleDeals();save();go('today');return}
     tmp.auth={cc,phone};go('profile');
   },500);
 }
 function finishSignup(){
   const p=tmp.prof;S.user={first:p.first.trim(),last:p.last.trim(),agency:p.agency.trim(),brn:p.brn.trim(),...tmp.auth,since:Date.now(),iban:''};
-  S.saved=S.user;S.deals=sampleDeals();S.seen=0;save();go('today');setTimeout(()=>toast('Welcome to Lenty Partners, '+S.user.first),300);
+  /* keep deals already in this browser: a mistyped number at log-in must not wipe them */
+  S.saved=S.user;if(!S.deals.length)S.deals=sampleDeals();S.seen=0;save();go('today');setTimeout(()=>toast('Welcome to Lenty Partners, '+S.user.first),300);
 }
 function logout(){S.user=null;save();go('welcome')}
 function resetAll(){try{localStorage.removeItem(KEY)}catch(e){}S=fresh();tmp.agree=false;tmp.prof=null;go('welcome')}
@@ -1069,18 +1070,22 @@ function submitRefer(){
 function dupText(d){return d.q&&d.q.dupOwn?tx('core.duplicate.own',{client:d.first,date:date(d.q.dupDate||d.createdAt)}):tx('core.duplicate.other')}
 const TEAM_KEY='lenty-team-v1.02'; /* demo leads of other agents (consultant page), same browser */
 const phoneKey=(cc,ph)=>String((cc||'')+(ph||'')).replace(/\D/g,'');
-/* Monthly counter and "new agent" from the agent's own data (spec: bonuses created this month count towards the limit, starters included) */
+/* Monthly counter and "new agent" from the agent's own data (spec: bonuses created this month count towards the limit, starters included).
+   Sample deals are for exploring the app and never count. */
 const sameMonth=t=>{if(!t)return false;const a=new Date(t),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()};
-function paidLeadsThisMonth(){return (S.deals||[]).filter(d=>d.bonus&&d.bonus.status!=='cancelled'&&sameMonth(d.bonus.at)).length}
-function isNewAgent(){if(!ADMIN.starter_bonus_enabled)return false;const ds=S.deals||[];return ds.filter(d=>d.q&&d.q.done).length<STARTER_N&&ds.filter(d=>d.bonus&&d.bonus.starter&&d.bonus.status!=='cancelled').length<STARTER_N}
+const realDeals=()=>(S.deals||[]).filter(d=>!d.sample);
+function paidLeadsThisMonth(){return realDeals().filter(d=>d.bonus&&d.bonus.status!=='cancelled'&&sameMonth(d.bonus.at)).length}
+function isNewAgent(){if(!ADMIN.starter_bonus_enabled)return false;const ds=realDeals();return ds.filter(d=>d.q&&d.q.done).length<STARTER_N&&ds.filter(d=>d.bonus&&d.bonus.starter&&d.bonus.status!=='cancelled').length<STARTER_N}
 /* screen previews keep their ?starter=1 / ?limit=1 switches; the live app uses the agent's real numbers */
 function starterBanner(){return PREVIEW?!!tmp.starter:isNewAgent()}
 function limitReached(){return PREVIEW?!!tmp.limit:paidLeadsThisMonth()>=LIMIT}
 function findDuplicate(d){
-  const since=Date.now()-90*DAY,pk=phoneKey(d.cc,d.phone),em=(d.email||'').trim().toLowerCase();
+  /* same rule as consultant.html: only an earlier lead (within 90 days before this one) makes this one a duplicate; leads already rejected as duplicates don't count */
+  const at=d.createdAt||Date.now(),pk=phoneKey(d.cc,d.phone),em=(d.email||'').trim().toLowerCase(),eid=String((d.q&&d.q.eid)||'').replace(/\D/g,'');
   let others=(S.deals||[]).filter(x=>x.id!==d.id);
   try{const t=JSON.parse(localStorage.getItem(TEAM_KEY)||'null');if(t&&Array.isArray(t.leads))others=others.concat(t.leads)}catch(e){}
-  return others.find(x=>(x.createdAt||0)>=since&&!(x.q&&x.q.reason==='duplicate')&&((pk&&phoneKey(x.cc,x.phone)===pk)||(em&&(x.email||'').trim().toLowerCase()===em)))||null;
+  return others.find(x=>{const xa=x.createdAt||0;if(xa>=at||xa<at-90*DAY||(x.q&&x.q.reason==='duplicate'))return false;
+    return (eid&&String((x.q&&x.q.eid)||'').replace(/\D/g,'')===eid)||(pk&&phoneKey(x.cc,x.phone)===pk)||(em&&(x.email||'').trim().toLowerCase()===em)})||null;
 }
 function contactsSheet(){
   const C=[['Maria','Santos','+971','52 334 1189'],['Liam','O\'Connor','+44','7911 123 456'],['Priya','Nair','+91','98450 11223'],['Khalid','Al Mansoori','+971','50 998 2210']];
@@ -1096,6 +1101,8 @@ function advance(id){
   else{d.stage=7;d.status='payout';d.disbursedAt=now;d.updates.push({at:now,t:'Loan disbursed and keys handed over. Your payout is scheduled.'});toast('Disbursed. Payout on '+date(payoutAt(d)))}
   save();go('deal',{id,keepScroll:true});
 }
+/* the client's name never goes into an inline handler: names like D'Souza would break it */
+function copyUpload(id){const d=S.deals.find(x=>x.id===id);if(d)copy('https://lenty.com/u/'+id,'Upload link copied. Send it to '+d.first)}
 function addDoc(id){const d=S.deals.find(x=>x.id===id);if(d.docs<6)d.docs++;d.updates.push({at:Date.now(),t:`${d.first} uploaded ${DOCS[d.docs-1]}.`});save();render();toast(DOCS[d.docs-1]+' received')}
 function markPaid(id){const d=S.deals.find(x=>x.id===id);d.status='paid';d.paidAt=Date.now();d.updates.push({at:Date.now(),t:`Commission of ${aed(comm(d))} paid to your account.`});save();render();toast(aed(comm(d))+' paid')}
 function setStatus(id,s){const d=S.deals.find(x=>x.id===id);d.status=s;d.updates.push({at:Date.now(),t:s==='lost'?'Deal marked as not proceeding.':'Deal reopened.'});save();render()}

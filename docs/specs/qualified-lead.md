@@ -171,7 +171,9 @@ on_hold / accrued / paid ──(шахрайство, до 30 днів)──►
 | Термін акції (How it works, Referral terms) | Programme · Referrals until 30 Nov 2026 |
 | Чек-лист, пункт Consent | Link sent to your client · Confirmed via link · Replied YES on WhatsApp · Given in your link form |
 | Рядок бонусу до кваліфікації | Lead bonus · Accrued when qualification is done · {N} days left |
-| Лід не кваліфіковано | Not qualified · Reason: {reason}. You keep the lead protection for 90 days. |
+| Лід не кваліфіковано (усі причини, крім дубля) | Not qualified · Reason: {reason}. You keep the lead protection for 90 days. |
+| Дубль: агент уже подавав цього клієнта | Not qualified · Duplicate client · You already referred {client} on {date}. We're working on that referral. |
+| Дубль: клієнта подав інший агент або він уже працює з Lenty (хто саме — агенту не показується) | Not qualified · Duplicate client · This client is already registered with Lenty, so this lead doesn't earn a bonus and isn't protected. |
 | Лід закрито після перевірки (причина fraud; слово «Fraud» агенту не показується), статус | Closed after review |
 | Лід закрито після перевірки, текст для агента | This lead was closed after a review by Lenty. It doesn't earn a lead bonus and isn't protected. Contact the partner team if you have questions. |
 | Дубль власного ліда цього ж агента (без обіцянки захисту) | You already referred {Client} on {date}. We're working on that referral. |
@@ -331,3 +333,4 @@ on_hold / accrued / paid ──(шахрайство, до 30 днів)──►
 4. Реалізувати частинами: модель даних і налаштування → логіка статусів, згоди й бонусів (разом з перемикачем промо-шару) → API → екрани агента → екрани консультанта й адміна.
 5. Після кожної частини запускати тести, перевіряти критерії приймання й порівнювати екрани зі стіною «До / Після».
 6. Якщо в репозиторії лише прототип без бекенду, екрани агента реалізуються в прототипі з демо-даними, а модель даних і API лишаються контрактом для бекенду.
+7. Правила функції — оцінка (DBR і мінімальний внесок), дублі, рішення про бонус, ліміти й строки програми — обчислюються лише на сервері. Застосунок агента і сторінка консультанта показують результат і не мають власних копій правил. Еталон правил у прототипі — `consultant.html` (`assess`, `findDuplicate`, `decideBonus`).

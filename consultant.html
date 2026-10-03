@@ -278,9 +278,9 @@ function allLeads(){
   return out;
 }
 function agentInfo(id){if(id==='me'){const m=myAgent()||{name:'You (agent app)',agency:''};return {name:m.name,agency:m.agency,base:{qualifiedTotal:0,starterUsed:0,monthBonuses:0,monthQualified:0,monthRejected:0}}}return DEMO_AGENTS[id]}
-/* Agent statistics: base numbers (demo history) + leads in this prototype */
+/* Agent statistics: base numbers (demo history) + leads in this prototype; the agent app's sample deals never count */
 function agentStats(id,exceptId){
-  const a=agentInfo(id),b=a.base;const ls=allLeads().filter(l=>l.agent===id&&l.id!==exceptId);
+  const a=agentInfo(id),b=a.base;const ls=allLeads().filter(l=>l.agent===id&&l.id!==exceptId&&!l.sample);
   const st={qualifiedTotal:b.qualifiedTotal+ls.filter(l=>l.q&&l.q.done).length,
     starterUsed:b.starterUsed+ls.filter(l=>l.bonus&&l.bonus.starter&&l.bonus.status!=='cancelled').length,
     monthBonuses:b.monthBonuses+ls.filter(l=>l.bonus&&l.bonus.status!=='cancelled'&&sameMonth(l.bonus.at)).length,
@@ -293,7 +293,7 @@ function agentStats(id,exceptId){
 /* Bonus decision at "Confirm qualification" (spec: rules of payout, promo layer, anti-fraud) */
 function decideBonus(l){
   /* right to a bonus and its amount are fixed when the lead was submitted (bonusEligible, terms) */
-  const eligible=l.bonusEligible===true||(l.bonusEligible!==false&&l.createdAt<ADMIN_DEFAULTS.lead_bonus_ends_at);
+  const eligible=l.bonusEligible===true||(l.bonusEligible!==false&&l.createdAt<PROGRAMME_END);
   if(!eligible)return {skip:'not_eligible'};
   const st=agentStats(l.agent,l.id);
   if(st.monthBonuses>=SETTINGS.monthly_limit)return {skip:'limit'};
