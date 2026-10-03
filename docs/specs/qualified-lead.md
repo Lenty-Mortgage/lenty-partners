@@ -155,7 +155,7 @@ on_hold / accrued / paid ──(шахрайство, до 30 днів)──►
 | Посилання на умови | How it works |
 | Після відправки | We've sent {Client} a link to confirm consent. Next step: documents. |
 | Лічильник | Paid leads this month: 3 of 10 |
-| Ліміт вичерпано | Monthly limit reached. This lead won't earn a bonus. |
+| Ліміт вичерпано | Monthly limit reached. This lead won't earn a bonus this month. *(ліміт перевіряється в момент кваліфікації: лід, кваліфікований наступного місяця, може отримати бонус)* |
 | Етап | Qualification |
 | Чек-лист | Consent · Assessment · Documents · Consultant call |
 | Рядок бонусу | Lead bonus: AED 100 · On review / Accrued / Paid / Cancelled |
