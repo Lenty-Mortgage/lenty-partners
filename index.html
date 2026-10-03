@@ -489,7 +489,7 @@ const aed=n=>'AED '+fmt(n);
 const short=n=>n>=1e6?'AED '+(n/1e6).toFixed(n%1e6?2:0).replace(/\.?0+$/,'')+'M':aed(n);
 const date=t=>new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 const ago=t=>{const s=(Date.now()-t)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';const d=Math.floor(s/86400);return d===1?'yesterday':d+'d ago'};
-const ini=(a,b)=>((a||'')[0]||'').toUpperCase()+((b||'')[0]||'').toUpperCase();
+const ini=(a,b)=>esc(((a||'')[0]||'').toUpperCase()+((b||'')[0]||'').toUpperCase());
 const adv=id=>ADVISORS.find(a=>a.id===id)||ADVISORS[0];
 const legal=id=>LEGAL.find(a=>a.id===id)||LEGAL[0];
 const comm=d=>d.loan*RATE;
@@ -654,7 +654,7 @@ today(){
   const pend=S.deals.filter(d=>d.status==='payout');
   const pendSum=pend.reduce((a,d)=>a+comm(d),0);
   const next=pend.sort((a,b)=>payoutAt(a)-payoutAt(b))[0];
-  const paid=S.deals.filter(d=>d.status==='paid').reduce((a,d)=>a+comm(d),0);
+  const paid=S.deals.filter(d=>d.status==='paid'&&sameYear(d.paidAt)).reduce((a,d)=>a+comm(d),0);
   const att=attention().sort((a,b)=>(b.chg||0)-(a.chg||0)).slice(0,3);
   const unread=S.deals.reduce((a,d)=>a+d.updates.filter(u=>u.at>S.seen).length,0);
   return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g20">
@@ -806,7 +806,7 @@ wallet(){
   return `<div class="view"><div class="top"></div><div class="scroll"><div class="px stack g20">
     <h1 class="h1" style="padding-top:6px">Wallet</h1>
     <div class="hero" style="cursor:default"><div class="aurora"></div>
-      <div class="lbl">Paid to you this year</div><div class="big num" style="margin-top:6px">${aed(sum(paid))}</div>
+      <div class="lbl">Paid to you this year</div><div class="big num" style="margin-top:6px">${aed(sum(paid.filter(d=>sameYear(d.paidAt))))}</div>
       <div class="split"><div><span class="lbl">Awaiting payout</span><b class="num">${aed(sum(pay))}</b><span class="lbl">${pay.length} deal${pay.length===1?'':'s'}</span></div><div><span class="lbl">In pipeline</span><b class="num">${aed(sum(act))}</b><span class="lbl">${act.length} deal${act.length===1?'':'s'}</span></div></div>
     </div>
     <div class="card pad row" style="gap:14px"><span class="serif num" style="font-size:28px;color:var(--accent-ink)">0.3%</span><span class="small muted">of the loan amount on every deal, paid ${PAYOUT_DAYS} days after the bank disburses the loan. Same rate for every partner.</span></div>
@@ -923,7 +923,7 @@ link(){
     <div class="card pad stack g10"><span class="label">Message for WhatsApp</span><p class="body" id="wamsg" style="margin:0">Hi! For your mortgage I work with Lenty: free advice, 19 UAE banks compared, and their legal team handles the transfer. Get a free pre-approval here: ${url}</p>
     <button class="btn btn-line btn-sm" onclick="copy($('#wamsg').textContent,'Message copied')">${I.wa} Copy message</button></div>
     ${PROMO?'':'<!--'}<div class="sample" data-chg="1">${I.spark}<span>${tx('promo.lead_bonus.link_hint',{bonusAed:aed(BONUS)})}</span></div>${PROMO?'':'-->'}
-    <div class="card pad stack g4"><div class="kv"><span>Clients via your link</span><span class="num">${S.deals.filter(d=>d.viaLink).length}</span></div><div class="kv"><span>Lead protection</span><span>90 days</span></div><div class="kv" data-chg="2"><span>Qualified via your link</span><span class="num">0 of 1</span></div></div>
+    <div class="card pad stack g4"><div class="kv"><span>Clients via your link</span><span class="num">${S.deals.filter(d=>d.viaLink).length}</span></div><div class="kv"><span>Lead protection</span><span>90 days</span></div><div class="kv" data-chg="2"><span>Qualified via your link</span><span class="num">${S.deals.filter(d=>d.viaLink&&d.q&&d.q.done&&!d.q.reason).length} of ${S.deals.filter(d=>d.viaLink).length}</span></div></div>
   </div><div style="height:40px"></div></div></div>`;
 },
 rates(){
@@ -1061,8 +1061,9 @@ function refSave(){
 function refNext(){refSave();tmp.refStep++;go('refer')}
 function refBack(){refSave();tmp.refStep--;go('refer')}
 function submitRefer(){
+  if(!PREVIEW)applyAdmin();
   refSave();const f=tmp.ref,now=Date.now(),a=adv(f.advisor);
-  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PROMO&&now<PROGRAMME_END,terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER,starterEnabled:!!ADMIN.starter_bonus_enabled},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
+  const d={id:'d'+now.toString(36),first:f.first.trim(),last:f.last.trim(),cc:f.cc.c,phone:f.phone.trim(),email:f.email.trim(),type:f.type,area:f.area.trim(),price:f.price,loan:Math.round(f.price*(1-f.down/100)),residency:f.residency,stage:0,status:'active',advisor:f.advisor,legal:'l1',docs:0,notes:f.notes.trim(),createdAt:now,q:{consent:false,assess:(assess(f)||{}).k||null,dbr:(assess(f)||{}).dbr||null,input:{income:f.income,debts:f.debts,residency:f.residency,price:f.price,down:f.down},docs:false,call:false,deadline:now+QDAYS*DAY,attestedAt:now,consentTextVersion:CONSENT_TEXT_VERSION},source:'agent_form',bonusEligible:PREVIEW?PROMO:programmeOn(ADMIN,now),terms:{version:PROMO?TERMS_VERSION:TERMS_VERSION_CORE,bonus:BONUS,starter:STARTER,starterEnabled:!!ADMIN.starter_bonus_enabled},updates:[{at:now,t:`Referral received. ${a.n} will message ${f.first.trim()} within 1 hour.`}]};
   /* spec: a duplicate (same phone, email or Emirates ID already in the system within 90 days, any agent) is rejected right after submission */
   const dup=findDuplicate(d);
   if(dup){const own=(S.deals||[]).some(x=>x.id===dup.id);d.status='lost';d.q.reason='duplicate';d.q.rejectedAt=now;d.q.auto=true;d.q.dupOwn=own;if(own)d.q.dupDate=dup.createdAt;d.updates.push({at:now,t:dupText(d)})}
@@ -1076,7 +1077,10 @@ const TEAM_KEY='lenty-team-v1.02'; /* demo leads of other agents (consultant pag
 function phoneKey(cc,ph){const c=String(cc||'').replace(/\D/g,'');let p=String(ph||'').replace(/\D/g,'');if(p.startsWith('00'))p=p.slice(2);if(c&&p.startsWith(c)&&p.length>c.length+6)p=p.slice(c.length);p=p.replace(/^0+/,'');return p?c+p:''}
 /* Monthly counter and "new agent" from the agent's own data (spec: bonuses created this month count towards the limit, starters included).
    Sample deals are for exploring the app and never count. */
-const sameMonth=t=>{if(!t)return false;const a=new Date(t),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()};
+/* calendar months and years are counted in Dubai time (UTC+4, no daylight saving), wherever the viewer is */
+const dubaiYM=t=>{const d=new Date(t+4*36e5);return {y:d.getUTCFullYear(),m:d.getUTCMonth()}};
+const sameMonth=t=>{if(!t)return false;const a=dubaiYM(t),b=dubaiYM(Date.now());return a.y===b.y&&a.m===b.m};
+const sameYear=t=>{if(!t)return false;return dubaiYM(t).y===dubaiYM(Date.now()).y};
 const realDeals=()=>(S.deals||[]).filter(d=>!d.sample);
 function paidLeadsThisMonth(){return realDeals().filter(d=>d.bonus&&d.bonus.status!=='cancelled'&&sameMonth(d.bonus.at)).length}
 function isNewAgent(){if(!ADMIN.starter_bonus_enabled)return false;const ds=realDeals();return ds.filter(d=>d.q&&d.q.done).length<STARTER_N&&ds.filter(d=>d.bonus&&d.bonus.starter&&d.bonus.status!=='cancelled').length<STARTER_N}

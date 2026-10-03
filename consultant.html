@@ -234,7 +234,10 @@ const num=v=>+String(v??'').replace(/[^\d.]/g,'')||0;
 const date=t=>new Date(t).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 const dt=t=>new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 const adv=id=>(ADVISORS.find(a=>a.id===id)||{n:'Lenty advisor'}).n;
-const sameMonth=t=>{if(!t)return false;const a=new Date(t),b=new Date();return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()};
+/* calendar months and years are counted in Dubai time (UTC+4, no daylight saving), wherever the viewer is */
+const dubaiYM=t=>{const d=new Date(t+4*36e5);return {y:d.getUTCFullYear(),m:d.getUTCMonth()}};
+const sameMonth=t=>{if(!t)return false;const a=dubaiYM(t),b=dubaiYM(Date.now());return a.y===b.y&&a.m===b.m};
+const sameYear=t=>{if(!t)return false;return dubaiYM(t).y===dubaiYM(Date.now()).y};
 function addWorkingDays(t,n){const d=new Date(t);let k=0;while(k<n){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)k++}return d.getTime()}
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
 function load(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
