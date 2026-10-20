@@ -1,7 +1,7 @@
 # План: від прототипу до робочого Lenty Partners
 
 **Статус:** погоджено власником 3 жовтня 2026 (рішення Р1–Р4, Р7, О5). Відкриті питання позначені окремо.
-**Основа:** ТЗ `docs/specs/qualified-lead.md`, чек-лист `docs/specs/qualified-lead-checklist.md` (17/17 критеріїв у прототипі), прототип v1.02 на https://lenty-mortgage.github.io/lenty-partners/
+**Основа:** ТЗ `docs/specs/qualified-lead.md`, чек-лист `docs/specs/qualified-lead-checklist.md` (17/17 критеріїв у прототипі), прототип v1.0 на https://lenty-mortgage.github.io/lenty-partners/
 
 Документ написано простою мовою, щоб його міг прочитати не лише розробник.
 
